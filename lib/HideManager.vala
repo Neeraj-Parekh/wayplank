@@ -663,14 +663,19 @@ namespace Plank
 		static X.Display? xdisplay = null;
 		static int xfail_count = 0;
 
-		/* True pointer position via XWayland (:0). GDK's get_pointer
-		 * returns (0,0) on Wayland; XWayland mirrors the global pointer. */
+		/* True pointer position via XWayland. GDK's get_pointer returns
+		 * (0,0) on Wayland; XWayland mirrors the global pointer. The
+		 * socket name changes across reboots (:0, :1, ...), so probe all. */
 		static bool query_pointer_xwayland (out int x, out int y)
 		{
 			x = 0;
 			y = 0;
 			if (xdisplay == null) {
-				xdisplay = new X.Display (":0");
+				for (var i = 0; i < 8; i++) {
+					xdisplay = new X.Display (":" + i.to_string ());
+					if (xdisplay != null)
+						break;
+				}
 				if (xdisplay == null)
 					return false;
 			}
