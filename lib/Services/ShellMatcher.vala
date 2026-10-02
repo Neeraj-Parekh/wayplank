@@ -58,8 +58,10 @@ namespace Plank
 
 		public void poll_once ()
 		{
-			if (!bridge.update ())
-				return;
+			// Refresh the app list; the return value only tells whether it
+			// changed. The diff and poll_tick below must run on EVERY poll
+			// (even unchanged/failed) so hide logic re-evaluates continuously.
+			bridge.update ();
 
 			// Never track ourselves (would add a bogus dock icon).
 			var seen = new Gee.HashSet<string> ();
