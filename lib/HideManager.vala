@@ -308,19 +308,15 @@ namespace Plank
 		
 		void update_hidden ()
 		{
+			bool was_hidden = Hidden;
+
 			if (Disabled) {
 				if (Hidden)
 					Hidden = false;
-				return;
-			}
-
-			// Edge hold beats every hide branch: a summoned dock stays.
-			if (edge_held ()) {
+			} else if (edge_held ()) {
 				show ();
-				return;
-			}
-
-			switch (controller.prefs.HideMode) {
+			} else {
+				switch (controller.prefs.HideMode) {
 			default:
 			case HideType.NONE:
 				show ();
@@ -362,8 +358,11 @@ namespace Plank
 				break;
 			}
 			pointer_update = true;
+			if (was_hidden != Hidden)
+				warning ("HIDETRACE hidden %s -> %s", was_hidden.to_string (), Hidden.to_string ());
+			}
 		}
-		
+
 		void hide ()
 		{
 			if (unhide_timer_id > 0U) {
@@ -429,8 +428,10 @@ namespace Plank
 		 * (May take keyboard focus on reveal; acceptable v1 trade-off.) */
 		void finish_show (bool was_hidden)
 		{
-			if (was_hidden && !Hidden)
+			if (was_hidden && !Hidden) {
+				warning ("SHOWTRACE revealed, presenting above apps");
 				controller.window.present ();
+			}
 		}
 		
 		[CCode (instance_pos = -1)]
@@ -626,6 +627,7 @@ namespace Plank
 			}
 
 			if (at_edge) {
+				warning ("REVEALTRACE edge-push at x=%d y=%d", x, y);
 				edge_hold_until = GLib.get_monotonic_time () + EDGE_HOLD_US;
 				show ();
 			} else if (in_edge_strip (x, y)) {
