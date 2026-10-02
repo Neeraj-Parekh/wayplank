@@ -250,15 +250,22 @@ namespace Plank
 			internal_quarks_initialize ();
 			environment_initialize ();
 			
-			// Make sure we are not doing silly things like trying to run in a wayland-session!
+			// Wayland sessions have no Wnck/Bamf: track applications through
+			// the PlankBridge Shell extension instead (org.plank.Bridge).
 			if (!environment_is_session_type (XdgSessionType.X11)) {
-				critical ("Only X11 environments are supported.");
-				quit ();
-				return;
+				var probe = new ShellBridge ();
+				if (!probe.update ()) {
+					critical ("Wayland session detected but the PlankBridge Shell extension is not reachable (org.plank.Bridge).");
+					quit ();
+					return;
+				}
+				message ("Wayland session: tracking applications through the Shell bridge.");
+				ShellMatcher.get_default ().start_polling ();
+			} else {
+				WindowControl.initialize ();
 			}
-			
+
 			Paths.initialize (exec_name, build_pkg_data_dir);
-			WindowControl.initialize ();
 			DockletManager.get_default ().load_docklets ();
 			
 			initialize ();

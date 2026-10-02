@@ -101,6 +101,11 @@ libplank_la_VALASOURCES = \
 	Services/Paths.vala \
 	Services/Preferences.vala \
 	Services/Settings.vala \
+	Services/ShellApplication.vala \
+	Services/ShellBridge.vala \
+	Services/ShellControl.vala \
+	Services/ShellMatcher.vala \
+	Services/ShellWindow.vala \
 	Services/System.vala \
 	Services/Unity.vala \
 	Services/Worker.vala \

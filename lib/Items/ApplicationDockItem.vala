@@ -65,29 +65,20 @@ namespace Plank
 		DbusmenuGtk.Client? Quicklist { get; set; default = null; }
 #endif
 		
-		Bamf.Application? app = null;
-		public Bamf.Application? App {
+		ShellApplication? app = null;
+		public ShellApplication? App {
 			internal get {
-				// Nasty hack for libreoffice as workarround
-				// closing libreoffice results in destroying its Bamf.Application object
-				// and creating a new object which renders our reference useless
-				// https://bugs.launchpad.net/bamf/+bug/1026426
-				// https://bugs.launchpad.net/plank/+bug/1029555
-				warn_if_fail (app == null || (app is Bamf.Application));
-				if (app != null && !(app is Bamf.Application))
-					app = null;
-				
 				return app;
 			}
 			internal construct set {
 				if (app == value)
 					return;
-				
+
 				if (app != null)
 					app_signals_disconnect (app);
-				
+
 				app = value;
-				
+
 				if (app != null) {
 					app_signals_connect (app);
 					initialize_states ();
@@ -96,7 +87,7 @@ namespace Plank
 				} else {
 					reset_application_status ();
 				}
-				
+
 				unity_update_application_uri ();
 			}
 		}
@@ -145,7 +136,7 @@ namespace Plank
 #endif
 		}
 		
-		void app_signals_connect (Bamf.Application app)
+		void app_signals_connect (ShellApplication app)
 		{
 			app.active_changed.connect_after (handle_active_changed);
 			app.name_changed.connect_after (handle_name_changed);
@@ -156,8 +147,8 @@ namespace Plank
 			app.child_removed.connect_after (handle_window_removed);
 			app.closed.connect_after (handle_closed);
 		}
-		
-		void app_signals_disconnect (Bamf.Application app)
+
+		void app_signals_disconnect (ShellApplication app)
 		{
 			app.active_changed.disconnect (handle_active_changed);
 			app.name_changed.disconnect (handle_name_changed);
@@ -256,23 +247,17 @@ namespace Plank
 			}
 		}
 		
-		void handle_window_added (Bamf.View? child)
+		void handle_window_added ()
 		{
-			if (!(child is Bamf.Window))
-				return;
-			
 			update_indicator ();
-			
+
 			app_window_added ();
 		}
-		
-		void handle_window_removed (Bamf.View? child)
+
+		void handle_window_removed ()
 		{
-			if (!(child is Bamf.Window))
-				return;
-			
 			update_indicator ();
-			
+
 			app_window_removed ();
 		}
 		
@@ -289,7 +274,7 @@ namespace Plank
 				return;
 			}
 			
-			var window_count = App.get_windows ().length ();
+			var window_count = App.get_window_count ();
 			
 			if (window_count <= 1) {
 				if (Indicator != IndicatorState.SINGLE)
@@ -321,14 +306,14 @@ namespace Plank
 		{
 			if (!is_window ())
 				if (button == PopupButton.MIDDLE
-					|| (button == PopupButton.LEFT && (App == null || App.get_windows ().length () == 0
+					|| (button == PopupButton.LEFT && (App == null || App.get_window_count () == 0
 					|| (mod & Gdk.ModifierType.CONTROL_MASK) == Gdk.ModifierType.CONTROL_MASK))) {
 					launch ();
 					return AnimationType.BOUNCE;
 				}
-			
-			if (button == PopupButton.LEFT && App != null && App.get_windows ().length () > 0) {
-				WindowControl.smart_focus (App, event_time);
+
+			if (button == PopupButton.LEFT && App != null && App.get_window_count () > 0) {
+				ShellControl.smart_focus (App, event_time);
 				return AnimationType.DARKEN;
 			}
 			
@@ -340,18 +325,18 @@ namespace Plank
 		 */
 		protected override AnimationType on_scrolled (Gdk.ScrollDirection direction, Gdk.ModifierType mod, uint32 event_time)
 		{
-			if (App == null || App.get_windows ().length () == 0)
+			if (App == null || App.get_window_count () == 0)
 				return AnimationType.NONE;
-			
+
 			if (GLib.get_monotonic_time () - LastScrolled < ITEM_SCROLL_DURATION * 1000)
 				return AnimationType.DARKEN;
-			
+
 			LastScrolled = GLib.get_monotonic_time ();
-			
+
 			if (direction == Gdk.ScrollDirection.UP || direction == Gdk.ScrollDirection.LEFT)
-				WindowControl.focus_previous (App, event_time);
+				ShellControl.focus_previous (App, event_time);
 			else
-				WindowControl.focus_next (App, event_time);
+				ShellControl.focus_next (App, event_time);
 			
 			return AnimationType.DARKEN;
 		}
@@ -396,14 +381,12 @@ namespace Plank
 		public override Gee.ArrayList<Gtk.MenuItem> get_menu_items ()
 		{
 			var items = new Gee.ArrayList<Gtk.MenuItem> ();
-			
-			GLib.List<unowned Bamf.View>? windows = null;
+
+			var windows = new Gee.ArrayList<ShellWindow> ();
 			if (App != null)
 				windows = App.get_windows ();
-			
-			var window_count = 0U;
-			if (windows != null)
-				window_count = windows.length ();
+
+			var window_count = windows.size;
 			
 			unowned DefaultApplicationDockItemProvider? default_provider = (Container as DefaultApplicationDockItemProvider);
 			if (default_provider != null
@@ -418,7 +401,7 @@ namespace Plank
 			var event_time = Gtk.get_current_event_time ();
 			if (is_running () && window_count > 0) {
 				var item = create_menu_item ((window_count > 1 ? _("_Close All") : _("_Close")), "window-close-symbolic;;window-close");
-				item.activate.connect (() => WindowControl.close_all (App, event_time));
+				item.activate.connect (() => ShellControl.close_all (App, event_time));
 				items.add (item);
 			}
 			
@@ -457,26 +440,24 @@ namespace Plank
 				if (items.size > 0)
 					items.add (new Gtk.SeparatorMenuItem ());
 				
-				foreach (var view in windows) {
-					unowned Bamf.Window? window = (view as Bamf.Window);
-					if (window == null || window.get_transient () != null)
+				foreach (var window in windows) {
+					if (window.placeholder)
 						continue;
-					
 					Gtk.MenuItem window_item;
-					var pbuf = WindowControl.get_window_icon (window);
-					var window_name = window.get_name ();
+					var pbuf = ShellControl.get_window_icon (window);
+					var window_name = window.title;
 					window_name = shorten_window_name (window_name);
-					
+
 					if (pbuf != null)
 						window_item = create_literal_menu_item_with_pixbuf (window_name, pbuf);
-					else 
+					else
 						window_item = create_literal_menu_item (window_name, Icon);
-					
-					if (window.is_active ())
+
+					if (window.active)
 						window_item.set_sensitive (false);
 					else
-						window_item.activate.connect (() => WindowControl.focus_window (window, event_time));
-					
+						window_item.activate.connect (() => ShellControl.focus_window (window, event_time));
+
 					items.add (window_item);
 				}
 			}

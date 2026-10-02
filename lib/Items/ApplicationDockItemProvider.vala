@@ -49,7 +49,7 @@ namespace Plank
 			// Make sure our launchers-directory exists
 			Paths.ensure_directory_exists (LaunchersDir);
 			
-			Matcher.get_default ().application_opened.connect (app_opened);
+			ShellMatcher.get_default ().application_opened.connect (app_opened);
 			
 			try {
 				items_monitor = LaunchersDir.monitor_directory (0);
@@ -63,7 +63,7 @@ namespace Plank
 		{
 			queued_files = null;
 			
-			Matcher.get_default ().application_opened.disconnect (app_opened);
+			ShellMatcher.get_default ().application_opened.disconnect (app_opened);
 			
 			if (items_monitor != null) {
 				items_monitor.changed.disconnect (handle_items_dir_changed);
@@ -72,30 +72,23 @@ namespace Plank
 			}
 		}
 		
-		protected unowned ApplicationDockItem? item_for_application (Bamf.Application app)
+		protected unowned ApplicationDockItem? item_for_shell_application (ShellApplication app)
 		{
-			var app_desktop_file = app.get_desktop_file ();
-			if (app_desktop_file != null && app_desktop_file.has_prefix ("/"))
-				try {
-					app_desktop_file = Filename.to_uri (app_desktop_file);
-				} catch (ConvertError e) {
-					warning (e.message);
-				}
-			
 			foreach (var item in internal_elements) {
 				unowned ApplicationDockItem? appitem = (item as ApplicationDockItem);
 				if (appitem == null)
 					continue;
-				
-				unowned Bamf.Application? item_app = appitem.App;
+
+				unowned ShellApplication? item_app = appitem.App;
 				if (item_app != null && item_app == app)
 					return appitem;
-				
+
 				unowned string launcher = appitem.Launcher;
-				if (launcher != "" && app_desktop_file != null && launcher == app_desktop_file)
+				if (launcher != "" && (launcher == "application://" + app.app_id
+					|| launcher.has_suffix ("/" + app.app_id)))
 					return appitem;
 			}
-			
+
 			return null;
 		}
 		
@@ -165,8 +158,8 @@ namespace Plank
 		public override void prepare ()
 		{
 			// Match running applications to their available dock-items
-			foreach (var app in Matcher.get_default ().active_launchers ()) {
-				unowned ApplicationDockItem? found = item_for_application (app);
+			foreach (var app in ShellMatcher.get_default ().active_launchers ()) {
+				unowned ApplicationDockItem? found = item_for_shell_application (app);
 				if (found != null)
 					found.App = app;
 			}
@@ -193,12 +186,13 @@ namespace Plank
 			return item_list.to_array ();
 		}
 		
-		protected virtual void app_opened (Bamf.Application app)
+		protected virtual void app_opened (string app_id)
 		{
-			// Make sure internal window-list of Wnck is most up to date
-			Wnck.Screen.get_default ().force_update ();
-			
-			unowned ApplicationDockItem? found = item_for_application (app);
+			var app = ShellMatcher.get_default ().app_for_id (app_id);
+			if (app == null)
+				return;
+
+			unowned ApplicationDockItem? found = item_for_shell_application (app);
 			if (found != null)
 				found.App = app;
 		}

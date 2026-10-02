@@ -61,19 +61,12 @@ namespace Plank
 		protected override void update_visible_elements ()
 		{
 			Logger.verbose ("DefaultDockItemProvider.update_visible_items ()");
-			
-			if (Prefs.CurrentWorkspaceOnly) {
-				unowned Wnck.Workspace? active_workspace = Wnck.Screen.get_default ().get_active_workspace ();
-				foreach (var item in internal_elements) {
-					unowned TransientDockItem? transient = (item as TransientDockItem);
-					item.IsAttached = (transient == null || transient.App == null || active_workspace == null
-						|| WindowControl.has_window_on_workspace (transient.App, active_workspace));
-				}
-			} else {
-				foreach (var item in internal_elements)
-					item.IsAttached = true;
-			}
-			
+
+			// v1 Wayland: no per-workspace window tracking yet, everything stays attached.
+			// (CurrentWorkspaceOnly defaults to off.)
+			foreach (var item in internal_elements)
+				item.IsAttached = true;
+
 			base.update_visible_elements ();
 		}
 		
@@ -84,31 +77,25 @@ namespace Plank
 		{
 			if (!Prefs.PinnedOnly)
 				add_transient_items ();
-			
-			var favs = new Gee.ArrayList<string> ();
-			
-			foreach (var element in internal_elements) {
-				unowned ApplicationDockItem? item = (element as ApplicationDockItem);
-				if (item != null && !(item is TransientDockItem))
-					favs.add (item.Launcher);
-			}
-			
-			Matcher.get_default ().set_favorites (favs);
 		}
-		
-		protected override void app_opened (Bamf.Application app)
+
+		protected override void app_opened (string app_id)
 		{
-			unowned ApplicationDockItem? found = item_for_application (app);
+			var app = ShellMatcher.get_default ().app_for_id (app_id);
+			if (app == null)
+				return;
+
+			unowned ApplicationDockItem? found = item_for_shell_application (app);
 			if (found != null) {
 				found.App = app;
 				return;
 			}
-			
+
 			if (Prefs.PinnedOnly)
 				return;
-			
+
 			var new_item = new TransientDockItem.with_application (app);
-			
+
 			add (new_item);
 		}
 		
@@ -121,50 +108,26 @@ namespace Plank
 		
 		void connect_wnck ()
 		{
-			unowned Wnck.Screen screen = Wnck.Screen.get_default ();
-			
-			screen.active_window_changed.connect_after (handle_window_changed);
-			screen.active_workspace_changed.connect_after (handle_workspace_changed);
-			screen.viewports_changed.connect_after (handle_viewports_changed);
+			// v1 Wayland: workspace tracking comes from the bridge later;
+			// nothing to connect yet.
 		}
-		
+
 		void disconnect_wnck ()
 		{
-			unowned Wnck.Screen screen = Wnck.Screen.get_default ();
-			
-			screen.active_window_changed.disconnect (handle_window_changed);
-			screen.active_workspace_changed.disconnect (handle_workspace_changed);
-			screen.viewports_changed.disconnect (handle_viewports_changed);
 		}
-		
-		[CCode (instance_pos = -1)]
-		void handle_window_changed (Wnck.Screen screen, Wnck.Window? previous)
+
+		void handle_window_changed ()
 		{
-			unowned Wnck.Workspace? active_workspace = screen.get_active_workspace ();
-			if (previous == null || active_workspace == null
-				|| previous.get_workspace () == active_workspace)
-				return;
-			
 			update_visible_elements ();
 		}
-		
-		[CCode (instance_pos = -1)]
-		void handle_workspace_changed (Wnck.Screen screen, Wnck.Workspace? previous)
+
+		void handle_workspace_changed ()
 		{
-			unowned Wnck.Workspace? active_workspace = screen.get_active_workspace ();
-			if (active_workspace != null && active_workspace.is_virtual ())
-				return;
-			
 			update_visible_elements ();
 		}
-		
-		[CCode (instance_pos = -1)]
-		void handle_viewports_changed (Wnck.Screen screen)
+
+		void handle_viewports_changed ()
 		{
-			unowned Wnck.Workspace? active_workspace = screen.get_active_workspace ();
-			if (active_workspace != null && !active_workspace.is_virtual ())
-				return;
-			
 			update_visible_elements ();
 		}
 		
@@ -196,8 +159,8 @@ namespace Plank
 			var transient_items = new Gee.ArrayList<DockElement> ();
 			
 			// Match running applications to their available dock-items
-			foreach (var app in Matcher.get_default ().active_launchers ()) {
-				unowned ApplicationDockItem? found = item_for_application (app);
+			foreach (var app in ShellMatcher.get_default ().active_launchers ()) {
+				unowned ApplicationDockItem? found = item_for_shell_application (app);
 				if (found != null) {
 					found.App = app;
 					continue;
@@ -248,7 +211,7 @@ namespace Plank
 		
 		protected override void handle_item_deleted (DockItem item)
 		{
-			unowned Bamf.Application? app = null;
+			unowned ShellApplication? app = null;
 			if (item is ApplicationDockItem)
 				app = ((ApplicationDockItem) item).App;
 			

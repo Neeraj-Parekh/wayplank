@@ -31,7 +31,7 @@ namespace Plank
 		
 		uint delayed_update_timer_id = 0U;
 		
-		internal TransientDockItem.with_application (Bamf.Application app)
+		internal TransientDockItem.with_application (ShellApplication app)
 		{
 			GLib.Object (Prefs: new DockItemPreferences (), App: app);
 		}
@@ -72,7 +72,7 @@ namespace Plank
 			if (delayed_update_timer_id > 0U)
 				return;
 			
-			ForcePixbuf = WindowControl.get_app_icon (App);
+			ForcePixbuf = ShellControl.get_app_icon (App);
 			if (ForcePixbuf != null)
 				return;
 			
@@ -81,7 +81,7 @@ namespace Plank
 				delayed_update_timer_id = 0U;
 				
 				if (App != null)
-					ForcePixbuf = WindowControl.get_app_icon (App);
+					ForcePixbuf = ShellControl.get_app_icon (App);
 				
 				return false;
 			});

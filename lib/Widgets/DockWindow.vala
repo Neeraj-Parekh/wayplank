@@ -554,7 +554,7 @@ namespace Plank
 					continue;
 				
 				var region = controller.position_manager.get_icon_geometry (appitem, use_hidden_region);
-				WindowControl.update_icon_regions (appitem.App, region);
+				ShellControl.update_icon_regions (appitem.App, region);
 			}
 		}
 		
@@ -572,7 +572,7 @@ namespace Plank
 			
 			var use_hidden_region = (menu_is_visible () || controller.hide_manager.Hidden);
 			var region = controller.position_manager.get_icon_geometry (appitem, use_hidden_region);
-			WindowControl.update_icon_regions (appitem.App, region);
+			ShellControl.update_icon_regions (appitem.App, region);
 		}
 		
 		/**

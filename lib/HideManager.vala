@@ -109,6 +109,20 @@ namespace Plank
 		int opcode = 0;
 		double pressure = 0.0;
 		uint pressure_timer_id = 0U;
+
+		// Wayland reveal polling: pointer barriers don't exist on Wayland, and a
+		// hidden (unmapped) dock receives no crossing events, so poll the pointer
+		// position and reveal when it is pushed against the dock edge.
+		uint reveal_poll_id = 0U;
+		const uint REVEAL_TIMEOUT = 100U;
+		const int REVEAL_EDGE_PX = 5;
+		uint reveal_tick = 0U;
+		/* Edge hold: while the pointer stays in the dock's edge strip the
+		 * dock counts as hovered so intellihide can't snatch it back between
+		 * reveal polls. Refreshed on every poll while in the strip. */
+		int64 edge_hold_until = 0;
+		const int64 EDGE_HOLD_US = 2000000;
+		const int EDGE_STRIP_EXTRA = 12;
 		bool barriers_supported = false;
 #endif
 		
@@ -135,39 +149,56 @@ namespace Plank
 			requires (controller.window != null)
 		{
 			unowned DockWindow window = controller.window;
-			unowned Wnck.Screen wnck_screen = Wnck.Screen.get_default ();
-			
+
 #if HAVE_BARRIERS
 			initialize_barriers_support ();
 #endif
-			
+
 			window.enter_notify_event.connect (handle_enter_notify_event);
 			window.leave_notify_event.connect (handle_leave_notify_event);
-			
-			wnck_screen.window_opened.connect_after (schedule_update);
-			wnck_screen.window_closed.connect_after (schedule_update);
-			wnck_screen.active_window_changed.connect_after (handle_active_window_changed);
-			wnck_screen.active_workspace_changed.connect_after (handle_workspace_changed);
-			
-			setup_active_window (wnck_screen);
+
+			// v1 Wayland: window events arrive via the Shell bridge matcher.
+			// poll_tick keeps intellihide re-evaluated every second.
+			ShellMatcher.get_default ().application_opened.connect (schedule_update_from_matcher);
+			ShellMatcher.get_default ().application_closed.connect (schedule_update_from_matcher);
+			ShellMatcher.get_default ().active_application_changed.connect (schedule_update_from_matcher_active);
+			ShellMatcher.get_default ().poll_tick.connect (schedule_update_from_tick);
+
+			start_reveal_poll ();
+
+			schedule_update ();
+		}
+
+		void schedule_update_from_matcher (string app_id)
+		{
+			schedule_update ();
+		}
+
+		void schedule_update_from_matcher_active (string? old_id, string? new_id)
+		{
+			schedule_update ();
+		}
+
+		void schedule_update_from_tick ()
+		{
+			schedule_update ();
 		}
 		
 		~HideManager ()
 		{
 			unowned DockWindow window = controller.window;
 			unowned DragManager drag_manager = controller.drag_manager;
-			unowned Wnck.Screen wnck_screen = Wnck.Screen.get_default ();
-			
+
 			controller.prefs.notify.disconnect (prefs_changed);
-			
+
 			window.enter_notify_event.disconnect (handle_enter_notify_event);
 			window.leave_notify_event.disconnect (handle_leave_notify_event);
-			
-			wnck_screen.window_opened.disconnect (schedule_update);
-			wnck_screen.window_closed.disconnect (schedule_update);
-			wnck_screen.active_window_changed.disconnect (handle_active_window_changed);
-			wnck_screen.active_workspace_changed.disconnect (handle_workspace_changed);
-			
+
+			ShellMatcher.get_default ().application_opened.disconnect (schedule_update_from_matcher);
+			ShellMatcher.get_default ().application_closed.disconnect (schedule_update_from_matcher);
+			ShellMatcher.get_default ().active_application_changed.disconnect (schedule_update_from_matcher_active);
+			ShellMatcher.get_default ().poll_tick.disconnect (schedule_update_from_tick);
+
 			stop_timers ();
 			
 #if HAVE_BARRIERS
@@ -282,7 +313,13 @@ namespace Plank
 					Hidden = false;
 				return;
 			}
-			
+
+			// Edge hold beats every hide branch: a summoned dock stays.
+			if (edge_held ()) {
+				show ();
+				return;
+			}
+
 			switch (controller.prefs.HideMode) {
 			default:
 			case HideType.NONE:
@@ -356,29 +393,44 @@ namespace Plank
 
 		void show ()
 		{
+			bool was_hidden = Hidden;
+
 			if (hide_timer_id > 0U) {
 				GLib.Source.remove (hide_timer_id);
 				hide_timer_id = 0U;
 			}
-			
-			if (!Hidden)
+
+			if (!Hidden) {
+				finish_show (was_hidden);
 				return;
-			
+			}
+
 			if (!pointer_update || controller.prefs.UnhideDelay == 0U) {
 				if (Hidden)
 					Hidden = false;
+				finish_show (was_hidden);
 				return;
 			}
-			
+
 			if (unhide_timer_id > 0U)
 				return;
-			
+
 			unhide_timer_id = Gdk.threads_add_timeout (controller.prefs.UnhideDelay, () => {
 				if (Hidden)
 					Hidden = false;
 				unhide_timer_id = 0U;
+				finish_show (was_hidden);
 				return false;
 			});
+		}
+
+		/* On Wayland there is no always-on-top: explicitly raise the dock
+		 * window every time it is revealed so it lands above applications.
+		 * (May take keyboard focus on reveal; acceptable v1 trade-off.) */
+		void finish_show (bool was_hidden)
+		{
+			if (was_hidden && !Hidden)
+				controller.window.present ();
 		}
 		
 		[CCode (instance_pos = -1)]
@@ -428,66 +480,34 @@ namespace Plank
 		
 		void update_window_intersect ()
 		{
-			var dock_rect = controller.position_manager.get_static_dock_region ();
-			var window_scale_factor = controller.window.get_window ().get_scale_factor ();
-			if (window_scale_factor > 1) {
-				dock_rect.x *= window_scale_factor;
-				dock_rect.y *= window_scale_factor;
-				dock_rect.width *= window_scale_factor;
-				dock_rect.height *= window_scale_factor;
-			}
-			
+			// v1 Wayland: no per-window geometry (no Wnck). Intellihide hides
+			// the dock when the active window is maximized/fullscreen, or when
+			// any tracked window is maximized (it is assumed to cover the dock).
 			var intersect = false;
-			var dialog_intersect = false;
 			var active_intersect = false;
-			var new_active_window_intersect = false;
 			var active_maximized_intersect = false;
-			unowned Wnck.Screen screen = Wnck.Screen.get_default ();
-			unowned Wnck.Window? active_window = screen.get_active_window ();
-			unowned Wnck.Workspace? active_workspace = screen.get_active_workspace ();
-			
-			if (active_window != null && active_workspace != null) {
-				var active_pid = active_window.get_pid ();
-				foreach (var w in screen.get_windows ()) {
-					if (w.is_minimized ())
-						continue;
-					var type = w.get_window_type ();
-					if (type == Wnck.WindowType.DESKTOP || type == Wnck.WindowType.DOCK
-						|| type == Wnck.WindowType.MENU || type == Wnck.WindowType.SPLASHSCREEN)
-						continue;
-					if (!w.is_visible_on_workspace (active_workspace))
-						continue;
-					var pid = w.get_pid ();
-					if (pid == plank_pid)
-						continue;
-					
-					if (window_geometry (w).intersect (dock_rect, null)) {
-						intersect = true;
-						
-						if (pid != active_pid)
-							continue;
-						
-						active_intersect = true;
-						
-						new_active_window_intersect = new_active_window_intersect || (active_window == w);
-						
-						active_maximized_intersect = active_maximized_intersect || (active_window == w
-							&& (w.is_maximized () || w.is_maximized_vertically () || w.is_maximized_horizontally ()));
-						
-						dialog_intersect = dialog_intersect || type == Wnck.WindowType.DIALOG;
-						
-						if (active_maximized_intersect && dialog_intersect)
-							break;
-					}
+
+			string active_id = "";
+			bool maximized = false, fullscreen = false;
+			if (ShellMatcher.get_default ().bridge.get_active_window (out active_id, out maximized, out fullscreen)) {
+				active_intersect = true;
+				if (maximized || fullscreen) {
+					intersect = true;
+					active_maximized_intersect = true;
 				}
 			}
-			
+
+			if (!intersect && ShellMatcher.get_default ().bridge.any_window_maximized ()) {
+				intersect = true;
+				active_maximized_intersect = true;
+			}
+
 			window_intersect = intersect;
-			dialog_windows_intersect = dialog_intersect;
+			dialog_windows_intersect = false;
 			active_application_intersect = active_intersect;
-			active_window_intersect = new_active_window_intersect;
+			active_window_intersect = active_intersect;
 			active_maximized_window_intersect = active_maximized_intersect;
-			
+
 			pointer_update = false;
 			update_hidden ();
 		}
@@ -504,69 +524,29 @@ namespace Plank
 			});
 		}
 		
-		[CCode (instance_pos = -1)]
-		void handle_workspace_changed (Wnck.Screen screen, Wnck.Workspace? previous)
+		void handle_workspace_changed ()
 		{
 			schedule_update ();
 		}
-		
-		[CCode (instance_pos = -1)]
-		void handle_active_window_changed (Wnck.Screen screen, Wnck.Window? previous)
+
+		void handle_active_window_changed ()
 		{
-			if (previous != null) {
-				previous.geometry_changed.disconnect (handle_geometry_changed);
-				previous.state_changed.disconnect (handle_state_changed);
-			}
-			
-			setup_active_window (screen);
-		}
-		
-		void setup_active_window (Wnck.Screen screen)
-		{
-			var active_window = screen.get_active_window ();
-			
-			if (active_window != null) {
-				last_window_rect = window_geometry (active_window);
-				active_window.geometry_changed.connect_after (handle_geometry_changed);
-				active_window.state_changed.connect_after (handle_state_changed);
-			}
-			
 			schedule_update ();
 		}
-		
-		[CCode (instance_pos = -1)]
-		void handle_state_changed (Wnck.Window window, Wnck.WindowState changed_mask, Wnck.WindowState new_state)
+
+		void setup_active_window ()
 		{
-			if ((changed_mask & Wnck.WindowState.MINIMIZED) == 0)
-				return;
-			
 			schedule_update ();
 		}
-		
-		[CCode (instance_pos = -1)]
-		void handle_geometry_changed (Wnck.Window window)
+
+		void handle_state_changed ()
 		{
-			var geo = window_geometry (window);
-			if (geo == last_window_rect)
-				return;
-			
-			last_window_rect = geo;
-			
-			if (geometry_timer_id > 0U)
-				return;
-			
-			geometry_timer_id = Gdk.threads_add_timeout (UPDATE_TIMEOUT, () => {
-				update_window_intersect ();
-				geometry_timer_id = 0U;
-				return false;
-			});
+			schedule_update ();
 		}
-		
-		static Gdk.Rectangle window_geometry (Wnck.Window window)
+
+		void handle_geometry_changed ()
 		{
-			Gdk.Rectangle win_rect = {};
-			window.get_geometry (out win_rect.x, out win_rect.y, out win_rect.width, out win_rect.height);
-			return win_rect;
+			schedule_update ();
 		}
 		
 		void stop_timers ()
@@ -595,11 +575,131 @@ namespace Plank
 				GLib.Source.remove (unhide_timer_id);
 				unhide_timer_id = 0U;
 			}
+
+			stop_reveal_poll ();
+		}
+
+		void start_reveal_poll ()
+		{
+			if (reveal_poll_id != 0U)
+				return;
+
+			reveal_poll_id = GLib.Timeout.add (REVEAL_TIMEOUT, () => {
+				check_reveal_poll ();
+				return true;
+			});
+		}
+
+		void stop_reveal_poll ()
+		{
+			if (reveal_poll_id > 0U) {
+				GLib.Source.remove (reveal_poll_id);
+				reveal_poll_id = 0U;
+			}
+		}
+
+		void check_reveal_poll ()
+		{
+			reveal_tick++;
+			if (!Hidden || controller.prefs.HideMode == HideType.NONE)
+				return;
+
+			int x = 0, y = 0;
+			if (!query_pointer_xwayland (out x, out y))
+				return;
+
+			bool at_edge = false;
+			unowned Gdk.Screen screen = Gdk.Screen.get_default ();
+			switch (controller.prefs.Position) {
+			case Gtk.PositionType.TOP:
+				at_edge = (y <= REVEAL_EDGE_PX);
+				break;
+			case Gtk.PositionType.BOTTOM:
+				at_edge = (y >= screen.get_height () - REVEAL_EDGE_PX);
+				break;
+			case Gtk.PositionType.LEFT:
+				at_edge = (x <= REVEAL_EDGE_PX);
+				break;
+			case Gtk.PositionType.RIGHT:
+				at_edge = (x >= screen.get_width () - REVEAL_EDGE_PX);
+				break;
+			}
+
+			if (at_edge) {
+				edge_hold_until = GLib.get_monotonic_time () + EDGE_HOLD_US;
+				show ();
+			} else if (in_edge_strip (x, y)) {
+				edge_hold_until = GLib.get_monotonic_time () + EDGE_HOLD_US;
+			}
+		}
+
+		bool edge_held ()
+		{
+			return GLib.get_monotonic_time () < edge_hold_until;
+		}
+
+		/* True while the pointer is anywhere over the dock's edge strip
+		 * (dock region plus a small margin), so the dock stays put while
+		 * the user moves from the screen edge down into it. */
+		bool in_edge_strip (int x, int y)
+		{
+			var rect = controller.position_manager.get_static_dock_region ();
+			switch (controller.prefs.Position) {
+			case Gtk.PositionType.TOP:
+				return y <= rect.y + rect.height + EDGE_STRIP_EXTRA;
+			case Gtk.PositionType.BOTTOM:
+				return y >= rect.y - EDGE_STRIP_EXTRA;
+			case Gtk.PositionType.LEFT:
+				return x <= rect.x + rect.width + EDGE_STRIP_EXTRA;
+			case Gtk.PositionType.RIGHT:
+				return x >= rect.x - EDGE_STRIP_EXTRA;
+			default:
+				return false;
+			}
+		}
+
+		static X.Display? xdisplay = null;
+		static int xfail_count = 0;
+
+		/* True pointer position via XWayland (:0). GDK's get_pointer
+		 * returns (0,0) on Wayland; XWayland mirrors the global pointer. */
+		static bool query_pointer_xwayland (out int x, out int y)
+		{
+			x = 0;
+			y = 0;
+			if (xdisplay == null) {
+				xdisplay = new X.Display (":0");
+				if (xdisplay == null)
+					return false;
+			}
+			X.Window root_ret = 0, child_ret = 0;
+			int rx = 0, ry = 0, wx = 0, wy = 0;
+			uint mask = 0;
+			if (!xdisplay.query_pointer (xdisplay.default_root_window (),
+				out root_ret, out child_ret, out rx, out ry, out wx, out wy, out mask)) {
+				// Drop stale connections (e.g. XWayland cycled) so the next
+				// poll reopens fresh instead of failing forever.
+				if (++xfail_count >= 3) {
+					xdisplay = null;
+					xfail_count = 0;
+				}
+				return false;
+			}
+			xfail_count = 0;
+			x = rx;
+			y = ry;
+			return true;
 		}
 		
 #if HAVE_BARRIERS
 		void initialize_barriers_support ()
 		{
+			// Pointer barriers are X11-only; on Wayland reveal tracking
+			// falls back to the pointer/pressure path.
+			if (!environment_is_session_type (XdgSessionType.X11)) {
+				barriers_supported = false;
+				return;
+			}
 			unowned Gdk.X11.Display gdk_display = (controller.window.get_display () as Gdk.X11.Display);
 			unowned X.Display display = gdk_display.get_xdisplay ();
 			int error_base, first_event_return;
