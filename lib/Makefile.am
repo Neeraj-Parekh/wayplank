@@ -106,6 +106,7 @@ libplank_la_VALASOURCES = \
 	Services/ShellControl.vala \
 	Services/ShellMatcher.vala \
 	Services/ShellWindow.vala \
+	Services/PlankStatus.vala \
 	Services/System.vala \
 	Services/Unity.vala \
 	Services/Worker.vala \

@@ -135,6 +135,7 @@ namespace Plank
 		Gtk.AboutDialog? about_dlg;
 		PreferencesWindow? preferences_dlg;
 		DockController? primary_dock;
+		public DockController? PrimaryDock { get { return primary_dock; } }
 		Gee.ArrayList<DockController> docks;
 		
 		construct
@@ -250,23 +251,31 @@ namespace Plank
 			internal_quarks_initialize ();
 			environment_initialize ();
 			
-			// Wayland sessions have no Wnck/Bamf: track applications through
-			// the PlankBridge Shell extension instead (org.plank.Bridge).
-			if (!environment_is_session_type (XdgSessionType.X11)) {
-				var probe = new ShellBridge ();
-				if (!probe.update ()) {
-					critical ("Wayland session detected but the PlankBridge Shell extension is not reachable (org.plank.Bridge).");
-					quit ();
-					return;
-				}
-				message ("Wayland session: tracking applications through the Shell bridge.");
-				ShellMatcher.get_default ().start_polling ();
-			} else {
-				WindowControl.initialize ();
+			// Track applications through the PlankBridge Shell extension in
+			// every session. Wnck/Bamf are kept alive on X11 only (icon
+			// geometry hints), never used as the tracking source.
+			var probe = new ShellBridge ();
+			if (!probe.update ()) {
+				critical ("PlankBridge Shell extension not reachable (org.plank.Bridge).");
+				quit ();
+				return;
 			}
+			message ("Tracking applications through the Shell bridge (org.plank.Bridge).");
+			ShellMatcher.get_default ().start_polling ();
+			if (environment_is_session_type (XdgSessionType.X11))
+				WindowControl.initialize ();
 
 			Paths.initialize (exec_name, build_pkg_data_dir);
 			DockletManager.get_default ().load_docklets ();
+
+			// Lightweight live-status endpoint (debug aid).
+			try {
+				var conn = GLib.Bus.get_sync (GLib.BusType.SESSION);
+				conn.register_object ("/org/plank/Status", new PlankStatus ());
+				try {
+					GLib.Bus.own_name (GLib.BusType.SESSION, "org.plank.Dock", GLib.BusNameOwnerFlags.NONE, null, null, null);
+				} catch (Error e) { warning ("name ownership failed: %s", e.message); }
+			} catch (Error e) { warning ("status export failed: %s", e.message); }
 			
 			initialize ();
 			create_docks ();

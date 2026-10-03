@@ -38,6 +38,11 @@ namespace Plank
 			bridge = new ShellBridge ();
 		}
 
+		public static ShellMatcher? instance_ref ()
+		{
+			return instance;
+		}
+
 		public void start_polling ()
 		{
 			if (poll_id != 0U)
