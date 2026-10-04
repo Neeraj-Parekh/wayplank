@@ -74,6 +74,10 @@ namespace Plank
 		
 		protected unowned ApplicationDockItem? item_for_shell_application (ShellApplication app)
 		{
+			// Launchers are file:// URIs; the bridge reports desktop-file IDs.
+			// Compare basenames so scheme differences never matter, and fall
+			// back to display-name matching for stale launchers (e.g. a
+			// Terminal dockitem still pointing at pre-Ptyxis desktop files).
 			foreach (var item in internal_elements) {
 				unowned ApplicationDockItem? appitem = (item as ApplicationDockItem);
 				if (appitem == null)
@@ -84,9 +88,21 @@ namespace Plank
 					return appitem;
 
 				unowned string launcher = appitem.Launcher;
-				if (launcher != "" && (launcher == "application://" + app.app_id
-					|| launcher.has_suffix ("/" + app.app_id)))
-					return appitem;
+				if (launcher != "") {
+					var slash = launcher.last_index_of ("/");
+					var launcher_id = (slash >= 0) ? launcher.substring (slash + 1) : launcher;
+					if (launcher_id == app.app_id)
+						return appitem;
+				}
+			}
+			if (app.get_name () != "") {
+				foreach (var item in internal_elements) {
+					unowned ApplicationDockItem? appitem = (item as ApplicationDockItem);
+					if (appitem == null || appitem.App != null)
+						continue;
+					if (appitem.Text != null && appitem.Text.down () == app.get_name ().down ())
+						return appitem;
+				}
 			}
 
 			return null;
