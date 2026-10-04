@@ -250,11 +250,8 @@ namespace Plank
 			dynamic_animation_offset = 0.0;
 			
 			var fade_opacity = theme.FadeOpacity;
-
-			// Fullscreen-overlay mode (Wayland): hiding works through fading
-			// only, since window moves are meaningless for a fullscreen window.
-			if (!environment_is_session_type (XdgSessionType.X11))
-				fade_opacity = 0.0;
+			// (fullscreen-overlay tweak removed: forced 0 here used to leave
+			// the native window painting as a black fullscreen slab.)
 			
 			if (screen_is_composited) {
 				var hide_duration = (fade_opacity == 1.0 ? theme.HideTime : theme.FadeTime) * 1000;

@@ -83,16 +83,11 @@ namespace Plank
 
 			stick ();
 
-			// Wayland has no override-redirect dock windows, struts or
-			// always-on-top: run fullscreen + transparent instead, so the
-			// compositor always stacks the dock above applications. Showing
-			// and hiding then happens purely through drawing (fade) and the
-			// input mask, never through positioning.
-			if (!environment_is_session_type (XdgSessionType.X11)) {
-				type_hint = Gdk.WindowTypeHint.NORMAL;
-				fullscreen ();
-			}
-			
+			// NOTE: previous versions enabled fullscreen + fake RGBA visual
+			// on Wayland to force z-order; that produced a fullscreen black
+			// surface with no transparency fallback. Reverting to a plain
+			// normal borderless window: gnome-shell treats it as a float.
+
 			add_events (Gdk.EventMask.BUTTON_PRESS_MASK |
 						Gdk.EventMask.BUTTON_RELEASE_MASK |
 						Gdk.EventMask.ENTER_NOTIFY_MASK |
@@ -767,14 +762,6 @@ namespace Plank
 		{
 			if (!get_realized ())
 				return;
-
-			// Hidden dock: fully click-through so the fullscreen overlay
-			// never swallows input meant for applications below it.
-			if (controller.hide_manager.Hidden) {
-				get_window ().input_shape_combine_region (new Cairo.Region (), 0, 0);
-				input_rect = {};
-				return;
-			}
 
 			var cursor_rect = controller.position_manager.get_cursor_region ();
 			// FIXME bug 768722 - this fixes the crash, but not WHY this happens

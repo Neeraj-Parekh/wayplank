@@ -42,6 +42,9 @@ namespace Plank
 			}
 		}
 
+		uint fail_count = 0U;
+		bool was_ok = true;
+
 		/* Returns true when the visible list changed. */
 		public bool update ()
 		{
@@ -52,9 +55,16 @@ namespace Plank
 				res = conn.call_sync (BUS_NAME, OBJECT_PATH, IFACE, "GetRunningApps", null,
 					new GLib.VariantType ("(a(ssib))"), GLib.DBusCallFlags.NONE, -1);
 			} catch (GLib.Error e) {
-				warning ("shellbridge: GetRunningApps failed: %s", e.message);
+				// Throttled: a missing bridge would otherwise spam the journal
+				// every poll while running in pinned-launchers-only mode.
+				fail_count++;
+				if (was_ok || fail_count % 60U == 0U)
+					warning ("shellbridge: GetRunningApps failed: %s", e.message);
+				was_ok = false;
 				return false;
 			}
+			fail_count = 0U;
+			was_ok = true;
 			var fresh = new Gee.ArrayList<AppRow?> ();
 			var list = res.get_child_value (0);
 			for (size_t i = 0; i < list.n_children (); i++) {

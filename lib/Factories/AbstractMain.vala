@@ -256,11 +256,11 @@ namespace Plank
 			// geometry hints), never used as the tracking source.
 			var probe = new ShellBridge ();
 			if (!probe.update ()) {
-				critical ("PlankBridge Shell extension not reachable (org.plank.Bridge).");
-				quit ();
-				return;
+				warning ("PlankBridge Shell extension not reachable (org.plank.Bridge) - "
+				         + "running with pinned launchers only until the bridge appears.");
+			} else {
+				message ("Tracking applications through the Shell bridge (org.plank.Bridge).");
 			}
-			message ("Tracking applications through the Shell bridge (org.plank.Bridge).");
 			ShellMatcher.get_default ().start_polling ();
 			if (environment_is_session_type (XdgSessionType.X11))
 				WindowControl.initialize ();
