@@ -1,0 +1,21 @@
+Source: wayplank
+Section: x11
+Priority: optional
+Maintainer: Neeraj Parekh <neerajparekh@outlook.com>
+Build-Depends: debhelper-compat (= 13), valac (>= 0.34),
+ libgtk-3-dev, libwnck-3-dev, libbamf3-dev, libgee-0.8-dev,
+ libgnome-menu-3-dev, libxfixes-dev, libxi-dev, libdbusmenu-glib-dev,
+ libdbusmenu-gtk3-dev, autoconf, automake, libtool, gettext, autopoint,
+ gtk-doc-tools
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
+
+Package: wayplank
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, dconf-gsettings-backend
+Conflicts: plank
+Description: Simple dock for Wayland (Plank fork with Shell-bridge tracking)
+ Wayplank keeps Plank's renderer, themes and behavior, but tracks
+ application windows through a companion GNOME Shell extension
+ (wayplank-bridge) instead of X11-only Wnck/Bamf, so it works in
+ native Wayland sessions.
