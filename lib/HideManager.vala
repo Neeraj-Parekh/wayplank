@@ -123,6 +123,7 @@ namespace Plank
 		int64 edge_hold_until = 0;
 		const int64 EDGE_HOLD_US = 2000000;
 		const int EDGE_STRIP_EXTRA = 12;
+		uint hover_stuck_count = 0U;
 		bool barriers_supported = false;
 #endif
 		
@@ -602,12 +603,33 @@ namespace Plank
 		void check_reveal_poll ()
 		{
 			reveal_tick++;
-			if (!Hidden || controller.prefs.HideMode == HideType.NONE)
+			if (controller.prefs.HideMode == HideType.NONE)
 				return;
 
 			int x = 0, y = 0;
 			if (!query_pointer_xwayland (out x, out y))
 				return;
+
+			// Hover watchdog: crossing events are unreliable on override-
+			// redirect windows, so Hovered can stick true after the pointer
+			// has left the dock (dock then hangs open). If the real pointer
+			// stays outside the dock region, force-unhover.
+			if (!Hidden) {
+				var rect = controller.position_manager.get_static_dock_region ();
+				bool inside = (x >= rect.x - EDGE_STRIP_EXTRA && x < rect.x + rect.width + EDGE_STRIP_EXTRA
+					&& y >= rect.y - EDGE_STRIP_EXTRA && y < rect.y + rect.height + EDGE_STRIP_EXTRA);
+				if (inside) {
+					hover_stuck_count = 0U;
+				} else if (++hover_stuck_count >= 10U) {
+					hover_stuck_count = 0U;
+					if (Hovered) {
+						warning ("HOVERFIX pointer outside dock, clearing stuck hover");
+						Hovered = false;
+						update_hidden ();
+					}
+				}
+				return;
+			}
 
 			bool at_edge = false;
 			unowned Gdk.Screen screen = Gdk.Screen.get_default ();
