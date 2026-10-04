@@ -3,7 +3,7 @@ include $(top_srcdir)/Makefile.common
 AM_VALAFLAGS = \
 	$(COVERAGE_VALAFLAGS) \
 	$(PLANK_CORE_VALAFLAGS) \
-	$(top_builddir)/lib/plank.vapi \
+	$(top_builddir)/lib/wayplank.vapi \
 	$(top_builddir)/lib/plank-internal.vapi \
 	--vapidir $(top_srcdir)/vapi \
 	$(top_srcdir)/vapi/config.vapi \
@@ -29,8 +29,8 @@ tests_CFLAGS = \
 tests_LDADD = \
 	$(COVERAGE_LDFLAGS) \
 	$(PLANK_CORE_LIBS) \
-	$(top_builddir)/lib/libplank.la \
-	$(top_builddir)/lib/libplank-internal.la \
+	$(top_builddir)/lib/libwayplank.la \
+	$(top_builddir)/lib/libwayplank-internal.la \
 	$(NULL)
 
 tests_VALASOURCES = \
@@ -49,7 +49,7 @@ nodist_tests_SOURCES = \
 
 $(tests_VALASOURCES:.vala=.c): tests_vala.stamp
 
-tests_vala.stamp: $(tests_VALASOURCES) $(top_builddir)/lib/plank.vapi $(top_builddir)/lib/plank-internal.vapi Makefile
+tests_vala.stamp: $(tests_VALASOURCES) $(top_builddir)/lib/wayplank.vapi $(top_builddir)/lib/plank-internal.vapi Makefile
 	$(AM_V_VALA)$(VALAC) \
 		$(AM_VALAFLAGS) \
 		$(filter %.vala %.c,$^)
@@ -69,7 +69,7 @@ nodist_dock_SOURCES = \
 
 $(dock_VALASOURCES:.vala=.c): dock_vala.stamp
 
-dock_vala.stamp: $(dock_VALASOURCES) $(top_builddir)/lib/plank.vapi $(top_builddir)/lib/plank-internal.vapi Makefile
+dock_vala.stamp: $(dock_VALASOURCES) $(top_builddir)/lib/wayplank.vapi $(top_builddir)/lib/plank-internal.vapi Makefile
 	$(AM_V_VALA)$(VALAC) \
 		$(AM_VALAFLAGS) \
 		$(filter %.vala %.c,$^)
@@ -124,8 +124,8 @@ gmock_tests_LDADD = \
 	$(COVERAGE_LDFLAGS) \
 	$(GMOCK_LDFLAGS) \
 	$(PLANK_CORE_LIBS) \
-	$(top_builddir)/lib/libplank.la \
-	$(top_builddir)/lib/libplank-internal.la \
+	$(top_builddir)/lib/libwayplank.la \
+	$(top_builddir)/lib/libwayplank-internal.la \
 	$(NULL)
 
 gmock_tests_SOURCES = \

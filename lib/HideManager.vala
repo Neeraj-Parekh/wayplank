@@ -360,7 +360,7 @@ namespace Plank
 			}
 			pointer_update = true;
 			if (was_hidden != Hidden)
-				warning ("HIDETRACE hidden %s -> %s", was_hidden.to_string (), Hidden.to_string ());
+				debug ("hide state changed: hidden %s -> %s", was_hidden.to_string (), Hidden.to_string ());
 			}
 		}
 
@@ -430,7 +430,7 @@ namespace Plank
 		void finish_show (bool was_hidden)
 		{
 			if (was_hidden && !Hidden) {
-				warning ("SHOWTRACE revealed, presenting above apps");
+				debug ("revealed, presenting above apps");
 				controller.window.present ();
 			}
 		}
@@ -623,7 +623,7 @@ namespace Plank
 				} else if (++hover_stuck_count >= 10U) {
 					hover_stuck_count = 0U;
 					if (Hovered) {
-						warning ("HOVERFIX pointer outside dock, clearing stuck hover");
+						debug ("pointer outside dock, clearing stuck hover");
 						Hovered = false;
 						update_hidden ();
 					}
@@ -649,7 +649,7 @@ namespace Plank
 			}
 
 			if (at_edge) {
-				warning ("REVEALTRACE edge-push at x=%d y=%d", x, y);
+				debug ("reveal edge-push at x=%d y=%d", x, y);
 				edge_hold_until = GLib.get_monotonic_time () + EDGE_HOLD_US;
 				show ();
 			} else if (in_edge_strip (x, y)) {

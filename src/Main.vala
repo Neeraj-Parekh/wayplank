@@ -57,13 +57,13 @@ namespace Plank
 				build_version : Build.VERSION,
 				build_version_info : Build.VERSION_INFO,
 			
-				program_name : "Plank",
-				exec_name : "plank",
+				program_name : "Wayplank",
+				exec_name : "wayplank",
 			
 				app_copyright : "2011-2023",
-				app_dbus : "net.launchpad.plank",
-				app_icon : "plank",
-				app_launcher : "plank.desktop",
+				app_dbus : "net.launchpad.wayplank",
+				app_icon : "wayplank",
+				app_launcher : "wayplank.desktop",
 			
 				main_url : "https://launchpad.net/plank",
 				help_url : "https://answers.launchpad.net/plank",

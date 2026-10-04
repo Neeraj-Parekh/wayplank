@@ -30,7 +30,7 @@ libdocklet_cpumonitor_la_LIBADD = \
 libdocklet_cpumonitor_la_LDFLAGS = \
 	$(DOCKLET_LDFLAGS) \
 	$(PLANK_CORE_LDFLAGS) \
-	$(top_builddir)/lib/libplank.la \
+	$(top_builddir)/lib/libwayplank.la \
 	$(NULL)
 
 libdocklet_cpumonitor_la_CFLAGS = \
@@ -41,7 +41,7 @@ libdocklet_cpumonitor_la_CFLAGS = \
 
 $(libdocklet_cpumonitor_la_VALASOURCES:.vala=.c): libdocklet_cpumonitor_la_vala.stamp
 
-libdocklet_cpumonitor_la_vala.stamp: $(libdocklet_cpumonitor_la_VALASOURCES) $(top_builddir)/lib/plank.vapi Makefile
+libdocklet_cpumonitor_la_vala.stamp: $(libdocklet_cpumonitor_la_VALASOURCES) $(top_builddir)/lib/wayplank.vapi Makefile
 	$(AM_V_VALA)$(VALAC) \
 		$(libdocklet_cpumonitor_la_VALAFLAGS) \
 		-C \

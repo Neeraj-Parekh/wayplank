@@ -11,29 +11,29 @@ endif
 
 EXTRA_DIST = \
 	application-default-icon.svg \
-	plank.appdata.xml.in \
-	net.launchpad.plank.gschema.xml.in \
-	plank.desktop.in \
-	plank.gresource.xml \
+	wayplank.appdata.xml.in \
+	net.launchpad.wayplank.gschema.xml.in \
+	wayplank.desktop.in \
+	wayplank.gresource.xml \
 	poof.svg \
 	ui/preferences.ui \
 	$(NULL)
 
 CLEANFILES = \
-	plank.appdata.xml \
-	plank.desktop \
+	wayplank.appdata.xml \
+	wayplank.desktop \
 	$(gsettings_SCHEMAS) \
 	gschemas.compiled \
-	net.launchpad.plank.gschema.valid \
+	net.launchpad.wayplank.gschema.valid \
 	$(NULL)
 
 applicationsdir = $(datadir)/applications
-applications_DATA = plank.desktop
+applications_DATA = wayplank.desktop
 
 appdatadir = $(datadir)/metainfo
-appdata_DATA = plank.appdata.xml
+appdata_DATA = wayplank.appdata.xml
 
-gsettings_SCHEMAS = net.launchpad.plank.gschema.xml
+gsettings_SCHEMAS = net.launchpad.wayplank.gschema.xml
 
 %.gschema.xml: %.gschema.xml.in Makefile
 	$(AM_V_GEN) sed -e 's|@GETTEXT_PACKAGE[@]|$(GETTEXT_PACKAGE)|g' \

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Copyright 2016 Rico Tzschichholz <ricotz@ubuntu.com> -->
 <component type="desktop">
-  <id>plank.desktop</id>
+  <id>wayplank.desktop</id>
   <metadata_license>CC0-1.0</metadata_license>
-  <name>Plank</name>
-  <summary>Stupidly simple.</summary>
+  <name>Wayplank</name>
+  <summary>A simple dock for Wayland.</summary>
   <description>
     <p>
-      Plank is meant to be the simplest dock on the planet. The goal is to provide just what a dock needs and
+      Wayplank is a Plank fork with native Wayland app tracking. The goal is to provide just what a dock needs and
       absolutely nothing more.
     </p>
     <p>
@@ -22,12 +22,12 @@
     <keyword>panel</keyword>
     <keyword>start</keyword>
   </keywords>
-  <url type="homepage">https://launchpad.net/plank</url>
-  <url type="bugtracker">https://bugs.launchpad.net/plank</url>
+  <url type="homepage">https://github.com/Neeraj-Parekh/wayplank</url>
+  <url type="bugtracker">https://github.com/Neeraj-Parekh/wayplank/issues</url>
   <url type="faq">https://answers.launchpad.net/plank</url>
   <url type="translate">https://translations.launchpad.net/plank</url>
   <provides>
-    <library>libplank.so.1</library>
+    <library>libwayplank.so.1</library>
     <binary>plank</binary>
   </provides>
   <releases>

@@ -21,13 +21,13 @@ namespace Plank
 {
 	const string DBUS_PING_NAME = "Ping";
 	
-	const string DBUS_DOCK_INTERFACE_NAME = "net.launchpad.plank";
-	const string DBUS_CLIENT_INTERFACE_NAME = "net.launchpad.plank.Client";
+	const string DBUS_DOCK_INTERFACE_NAME = "net.launchpad.wayplank";
+	const string DBUS_CLIENT_INTERFACE_NAME = "net.launchpad.wayplank.Client";
 
 	/**
 	 * Provide an interface to manage items of the dock
 	 */
-	[DBus (name = "net.launchpad.plank.Items")]
+	[DBus (name = "net.launchpad.wayplank.Items")]
 	interface DBusItemsIface : GLib.Object
 	{
 		/**

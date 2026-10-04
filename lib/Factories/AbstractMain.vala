@@ -256,10 +256,10 @@ namespace Plank
 			// geometry hints), never used as the tracking source.
 			var probe = new ShellBridge ();
 			if (!probe.update ()) {
-				warning ("PlankBridge Shell extension not reachable (org.plank.Bridge) - "
+				warning ("PlankBridge Shell extension not reachable (org.wayplank.Bridge) - "
 				         + "running with pinned launchers only until the bridge appears.");
 			} else {
-				message ("Tracking applications through the Shell bridge (org.plank.Bridge).");
+				message ("Tracking applications through the Shell bridge (org.wayplank.Bridge).");
 			}
 			ShellMatcher.get_default ().start_polling ();
 			if (environment_is_session_type (XdgSessionType.X11))
@@ -271,9 +271,9 @@ namespace Plank
 			// Lightweight live-status endpoint (debug aid).
 			try {
 				var conn = GLib.Bus.get_sync (GLib.BusType.SESSION);
-				conn.register_object ("/org/plank/Status", new PlankStatus ());
+				conn.register_object ("/org/wayplank/Status", new PlankStatus ());
 				try {
-					GLib.Bus.own_name (GLib.BusType.SESSION, "org.plank.Dock", GLib.BusNameOwnerFlags.NONE, null, null, null);
+					GLib.Bus.own_name (GLib.BusType.SESSION, "org.wayplank.Dock", GLib.BusNameOwnerFlags.NONE, null, null, null);
 				} catch (Error e) { warning ("name ownership failed: %s", e.message); }
 			} catch (Error e) { warning ("status export failed: %s", e.message); }
 			
@@ -300,7 +300,7 @@ namespace Plank
 				return;
 			}
 			
-			var settings = create_settings ("net.launchpad.plank");
+			var settings = create_settings ("net.launchpad.wayplank");
 			var enabled_docks = settings.get_strv ("enabled-docks");
 			
 			// Allow up to 8 docks

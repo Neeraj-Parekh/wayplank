@@ -1,9 +1,9 @@
 # If not 1, append revision to the version number and enable other development stuff
 m4_define([plank_released], [0])
 
-m4_define([plank_major_version], [0])
-m4_define([plank_minor_version], [11])
-m4_define([plank_micro_version], [89])
+m4_define([plank_major_version], [1])
+m4_define([plank_minor_version], [0])
+m4_define([plank_micro_version], [0])
 m4_define([plank_nano_version], [0])
 
 # If library source has changed since last release, increment revision
@@ -351,7 +351,7 @@ data/apport/Makefile
 data/icons/Makefile
 data/themes/Makefile
 lib/Makefile
-lib/plank.pc
+lib/wayplank.pc
 lib/Version.vala
 src/Makefile
 docklets/Makefile

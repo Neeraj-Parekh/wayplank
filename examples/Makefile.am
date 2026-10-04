@@ -3,7 +3,7 @@ include $(top_srcdir)/Makefile.common
 AM_VALAFLAGS = \
 	$(COVERAGE_VALAFLAGS) \
 	$(PLANK_CORE_VALAFLAGS) \
-	$(top_builddir)/lib/plank.vapi \
+	$(top_builddir)/lib/wayplank.vapi \
 	--vapidir $(top_srcdir)/vapi \
 	-C \
 	$(NULL)
@@ -23,7 +23,7 @@ noinst_PROGRAMS = \
 remote_client_LDADD = \
 	$(COVERAGE_LDFLAGS) \
 	$(PLANK_CORE_LIBS) \
-	$(top_builddir)/lib/libplank.la \
+	$(top_builddir)/lib/libwayplank.la \
 	$(NULL)
 
 remote_client_VALASOURCES = \
@@ -36,7 +36,7 @@ nodist_remote_client_SOURCES = \
 
 $(remote_client_VALASOURCES:.vala=.c): remote_client_vala.stamp
 
-remote_client_vala.stamp: $(remote_client_VALASOURCES) $(top_builddir)/lib/plank.vapi Makefile
+remote_client_vala.stamp: $(remote_client_VALASOURCES) $(top_builddir)/lib/wayplank.vapi Makefile
 	$(AM_V_VALA)$(VALAC) \
 		$(AM_VALAFLAGS) \
 		$(filter %.vala %.c,$^)
@@ -45,7 +45,7 @@ remote_client_vala.stamp: $(remote_client_VALASOURCES) $(top_builddir)/lib/plank
 unity_client_LDADD = \
 	$(COVERAGE_LDFLAGS) \
 	$(PLANK_CORE_LIBS) \
-	$(top_builddir)/lib/libplank.la \
+	$(top_builddir)/lib/libwayplank.la \
 	$(NULL)
 
 unity_client_VALASOURCES = \
@@ -58,7 +58,7 @@ nodist_unity_client_SOURCES = \
 
 $(unity_client_VALASOURCES:.vala=.c): unity_client_vala.stamp
 
-unity_client_vala.stamp: $(unity_client_VALASOURCES) $(top_builddir)/lib/plank.vapi Makefile
+unity_client_vala.stamp: $(unity_client_VALASOURCES) $(top_builddir)/lib/wayplank.vapi Makefile
 	$(AM_V_VALA)$(VALAC) \
 		$(AM_VALAFLAGS) \
 		$(filter %.vala %.c,$^)

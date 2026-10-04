@@ -95,7 +95,7 @@ namespace Plank
 		 */
 		public DockPreferences (string name)
 		{
-			Object (settings: create_settings ("net.launchpad.plank.dock.settings", "/net/launchpad/plank/docks/%s/".printf (name)));
+			Object (settings: create_settings ("net.launchpad.wayplank.dock.settings", "/net/launchpad/plank/docks/%s/".printf (name)));
 		}
 		
 		~DockPreferences ()
