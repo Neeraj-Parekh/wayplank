@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Wayplank
+GenericName[de]=Dock
+GenericName=Dock
+Comment=A simple dock for Wayland (Plank fork with Shell-bridge tracking).
+Categories=Utility;GNOME;
+Type=Application
+Exec=wayplank
+Icon=wayplank
+Terminal=false
+NoDisplay=false

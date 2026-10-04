@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2016 Rico Tzschichholz <ricotz@ubuntu.com> -->
+<component type="desktop">
+  <id>wayplank.desktop</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <name>Wayplank</name>
+  <summary>A simple dock for Wayland.</summary>
+  <description>
+    <p>
+      Wayplank is a Plank fork with native Wayland app tracking. The goal is to provide just what a dock needs and
+      absolutely nothing more.
+    </p>
+    <p>
+      It is, however, a library which can be extended to create other dock programs with more advanced features.
+      Thus, Plank is the underlying technology for Docky (starting in version 3.0.0) and aims to provide all the
+      core features while Docky extends it to add fancier things like Docklets, painters, settings dialogs, etc.
+    </p>
+    <p xml:lang="zh-Hant-TW">它，雖然也是個可以擴展開來建立其他具備更多進階功能的 Dock 程式函式庫。因此，Plank 是 Docky (3.0.0 版起) 的基底技術，以提供所有基本核心功能為目標；而 Docky 將之擴展，增添更多新穎的功能，例如 Dock 元件、繪製器、設定對話盒…等等。</p>
+    <p xml:lang="zh-Hans-CN">与此同时，它也是一个可以扩展创建更多特性的Dock程序库。因此，Plank实际上是Docky(从版本3.0.0开始)的底层技术，为Docky提供了所有核心的功能。Docky在其基础上扩展了更多酷炫特性如Docklet、画笔、设置对话框等。</p>
+    <p xml:lang="uz-Latn">Ammo, bu kutubxona kengaytirlishi mumkin va rivojlangan funksiyalarga ega boshqa dok dasturlarini yaratish mumkin. Dock Docky (3.0.0 versiyadan boshlab) uchun asos texnlogiya va asosiy xususiyatlarni ta'minlashga qaratilgan, Docky esa qo'shimchalarni qamrab olgan.</p>
+    <p xml:lang="uk">Це, проте, бібліотека, яка може бути розширена для створення інших доків-програм з більш розширеним функціоналом. Таким чином, Plank - це основа для Docky (починаючи з версії 3.0.0), яка прагне забезпечити всі основні функції в той час, як Docky розширює його, додаючи гарні речі, як то Доклети, промалювання, діалоги налаштувань, тощо.</p>
+    <p xml:lang="tr">Ancak, daha gelişmiş özelliklerle başka dock programları oluşturabilecek genişletilebilir bir kütüphanedir de. Bu yüzden Plank, Docky'nin (sürüm 3.0.0'dan itibaren) altında yatan teknolojidir ve Docky'nin Docklets, resimler, ayarlar, iletişim kutuları gibi süslü tüm temel özelliklerini karşılamayı amaçlar.</p>
+    <p xml:lang="th">อย่างไรก็ตามไลบรารี่ยังสามารถไปเพิ่มเติมคุณสมบัติพิเศษได้มากมาย เพราะงั้นแพลงค์จึงถูกใช้เป็นเทคโลยีหลักข้างใน Docky (ตั้งแต่เวอร์ชั่น 3.0.0 เป็นต้นมา) และแพลงค์มุ่งหมายที่จะเพิ่มความสามารถหลักๆ ต่างจาก Docky ที่มุ่งเพิ่มฟีเจอร์หรูหราอย่างเช่น Docklets, วาดภาพ, การตั้งค่าไดอะลอก ฯลฯ</p>
+    <p xml:lang="te">ఇది ఒక సాఫ్ట్ వేర్ లిబ్రరీ. దీనిని ఉపయోగించి కొత్త ప్రొగ్రామ్ లను మరియు అత్యాధునిక ఫీచర్లను తయారు చేయవచ్చు. డాకీ ప్లాంక్ మీదే ఆధార పది పని చేస్తుంది.</p>
+    <p xml:lang="szl">Je to ale bibliotyka, co może być rozszyrzōno do tworzynio nowych dokōw ze srogszymi funkcyjami. Beztōż Plank to je technologijo, co spiyro Docky (ôd wersyje 3.0.0) i chce dać wszyjske podstawowe funkcyje, a Docky rozszyrzo je, żeby przidać fajniyjsze rzeczy, jak Docklety, tymaty, ôkna sztelōnkōw itp.</p>
+    <p xml:lang="sv">Det är, trots allt, ett bibliotek som kan utökas för att skapa andra panelprogram med mera avancerade funktioner.&#13;
+Plank är den underliggande teknologin för Docky (med start i version 3.0.0) och strävar efter att tillhandahålla alla grundfunktioner medan Docky utökar det med lite elegantare effekter som dockprogram, målare, inställningsdialoger med mera.</p>
+    <p xml:lang="sr-Latn">On je, u stvari, biblioteka koja se može proširiti, kako bi se napravili drugi dok programi sa još naprednijim funkcijama. Stoga, Plank je osnova za Doki (počevši od verzije 3.0.0) i cilj mu je da pruži sve ključne funkcije, dok ih Doki proširuje kako bi dodao naprednije stvari kao što su Dokleti, boje, prozorčići sa podešavanjima, itd.</p>
+    <p xml:lang="sr-Cyrl">То је, уствари, библиотека која се може проширити како би се направили други лучки програми са више напредних функција. Стога, Планк је полазна технологија за Доки (почевши од издања 3.0.0) и циљ му је да обезбеди све кључне функције, док их Доки проширује како би додао китњастије ствари као што су справице, сликари, прозорчићи подешавања, итд.</p>
+    <p xml:lang="sk">Je to avšak knižnica, ktorá môže byť rozšírená na vytváranie iných dokov s pokročilejšími funkciami. Plank je základom Docky (začínajúc verziou 3.0.0) a jeho cieľom je poskytnúť všetky základné funkcie, kým Docky ho rozšíri a pridá ozdobné veci ako Doklety, paintery, dialógy pre nastavenia a i.</p>
+    <p xml:lang="ru">Однако, это библиотека, которая может быть расширена для создания других док-панелей с более продвинутыми функциями. Таким образом, Plank является основной технологией Docky (начиная с версии 3.0.0) и призван обеспечить все основные функции, в то время как Docky расширяет его, чтобы добавить такие фантастические вещи, как доклеты, окраска тем оформления, диалоги настроек и прочее.</p>
+    <p xml:lang="pt-BR">Plank é, no entanto, uma biblioteca que pode ser estendida para criar outros docks com recursos mais avançados. Assim, Plank é a tecnologia por trás de Docky (a partir da versão 3.0.0), e pretende fornecer todos os recursos centrais, enquanto Docky o estende, adicionando requintes como Docklets, indicadores, janelas de configuração, etc.</p>
+    <p xml:lang="pt">É, no entanto, uma biblioteca que pode ser expandida para criar outras docas com muitas mais funcionalidades. A Plank é a infraestrutura da aplicação Docky (a partir da versão 3.0.0) e pretende disponibilizar as funcionalidades básicas, enquanto que o Docky adiciona muitos mais efeitos especiais.</p>
+    <p xml:lang="pl">Pomimo tego, jest to także biblioteka, która umożliwia tworzenie innych programów dokujących o zaawansowanych możliwościach. I tak, Plank obecny jest w Docky (począwszy od wersji 3.0.0) i obsługuje wszystkie jego podstawowe funkcje, podczas gdy Docky zajmuje się bardziej wymyślnymi sprawami, takimi jak obsługa dokletów, drukarek, okien z ustawieniami itd.</p>
+    <p xml:lang="nl">Het is echter ook een bibliotheek die uitgebreid kan worden met andere dock-toepassingen met meer geavanceerde opties. Plank is dus de onderliggende technologie voor Docky (zal starten in versie 3.0.0) en zal voor al de kernfuncties zorgen terwijl Docky extra dingen toe kan voegen zoals docklets, kleuropties, instellingendialoog, enz.</p>
+    <p xml:lang="nb">Det er imidlertid et bibliotek som kan utvides for å skape andre dokk programmer med flere avanserte funksjoner. Dermed er Plank den underliggende teknologien for Docky (starter i versjon 3.0.0) og har som mål å gi alle kjernefunksjonene mens Docky utvider det til å legge til mer avanserte ting som docklets, malere, innstillingsdialoger, etc.</p>
+    <p xml:lang="ml">എന്നിരിക്കിലും  ഇത് മികവാർന്ന പുതിയ ഡോക്കുകൾ ഉണ്ടാക്കുവാൻ വേണ്ടി വിപുലീകരിക്കാവുന്ന ആലേഖനങ്ങൾ തന്നെയാണ് .അടിസ്ഥാന പ്രയോഗങ്ങളിൽ മാത്രം ലക്ഷ്യം വെക്കുന്ന പ്ലാങ്ക്, ഡോക്കിയുടെ അടിസ്ഥാന സാങ്കേതികതയാണ് (വെർഷൻ 3.0.0 മുതൽ) എന്നാൽ ഡോക്കി ഭാവനാപരമായ ഡോക്ക്ലെട്സ്,പെയിന്റേർസ്,സെറ്റിംഗ്സ് ലേഖനം തുടങ്ങിയവ ഉള്പെടുതുവാൻ ഇതിനെ വിപുലീകരിച്ചു.</p>
+    <p xml:lang="lv">Neskatoties uz to, tā ir bibliotēka, kura var tikt papildināta, lai izveidotu citas paneļu programmas ar sarežģītākām funkcijām. Tāpēc, Plank ir pamattehnoloģija programmai Docky ( sākot no 3.0.0 versijas) un tās mērķis ir nodrošināt visas pamatfunkcijas, kamēr Docky paplašina to, lai tam pievienotu jau sarežģītākas lietas, kā Dockleti, painteri, iestatījumu dialogus u.c.</p>
+    <p xml:lang="lt">Kita vertus, jis yra biblioteka, kuri gali būti išplėsta, siekiant sukurti kitas skydelio programas su labiau išplėstinėmis ypatybėmis. Štai kodėl Plank yra esminė Docky (pradedant versijoje 3.0.0) technologija ir siekia pateikti visas pagrindines ypatybes, tuo tarpu kai Docky išplečia jį ir prideda tokius dalykus kaip įskiepiai, nustatymų dialogai ir t.t.</p>
+    <p xml:lang="ko">다만, 라이브러리를 사용해서 다른 독(dock) 프로그램을 만들고 더 상세한 기능을 개발할 수 있습니다. 플랭크는 도키(Docky 버전 3.0.0 부터)의 기반으로 사용되고 있으며, 저희는 기초적인 기능을 제공하고 도키(Docky)가 더 상세한 기능들을 제공할 것입니다.</p>
+    <p xml:lang="it">È, tuttavia, una libreria che può essere estesa per creare altri programmi dock con caratteristiche più avanzate. Perciò, Plank è la tecnologia di base per Docky (a partire dalla versione 3.0.0) e mira a fornire tutte le funzionalità di base, mentre Docky le estende per aggiungere cose più elaborate come docklets, pittori, finestre di dialogo con impostazioni, ecc.</p>
+    <p xml:lang="id">Namun juga, kepustakaannya bisa diperluas guna menciptakan program-program dok lainnya yang memiliki fitur lebih canggih. Oleh karena, Plank adalah teknologi yang mendasari Docky (mulai dari versi 3.0.0) dan bertujuan menyediakan semua  fitur ini sementara Docky meluaskannya dan menambahkan hal-hal menawan seperti Docklets, painter, setelan dialog, dsb.</p>
+    <p xml:lang="hu">Ez, ugyanakkor, egy programozói könyvtár ami kibővíthető más dokk programok létrehozására, fejlettebb funkciókkal. Ezért hát a Plank a Docky alatt rejlő technológia (a 3.0.0 verziótól kezdve) és az alapfunkciók biztosítását célozza, míg a Docky ezt kibővítve látványosabb dolgokat ad hozzá, mint például Dockleteket, festőket (painters), beállítóablakot, stb.</p>
+    <p xml:lang="he">עם זאת, זוהי ספרייה הניתנת להרחבה ליצירת תוכנות אחרות לעיגון יישומים עם מאפיינים מתקדמים יותר. כך, למשל, Plank הוא התשתית הטכנולוגית של Docky (החל מגרסה 3.0.0), במטרה לספק את כל מאפייני הליבה, בעוד ש-Docky מרחיב אותו ומאפשר לשנות את העיצוב או את אופן הפעולה, להוסיף לוחיות יישומים נוספות</p>
+    <p xml:lang="gl">Porén, é una biblioteca que pode estenderse para crear outros programas de doca con características máis avanzadas. Polo tanto, Plank é a tecnoloxía subxacente de Docky (a partires da versión 3.0.0) e ten como obxectivo fornecer todas as características básicas, mentres que Docky esténdea  para engadir cousas máis elegantes como trebellos, pintores, diálogos de axuste, etc.</p>
+    <p xml:lang="gd">'S e leabharlann a th' ann co-dhiù a ghabhas leudachadh gus prògraman doca eile a chruthachadh air a bheil barrachd roghainnean adhartach. Mar sin, 's e an teicneolas air air a tha Docky stèidhichte (on tionndadh 3.0.0. a-mach) a th' ann am Plank agus tha sinn ag amas na feartan bunasach uile a thoirt dhuibh fhad 's a chuireas Docky ris le rudan spaideil leithid Docklets, peantairean, còmhraidhean airson roghainnean is msaa.</p>
+    <p xml:lang="ga">Ach tá sé ina leabharlann freisin gur féidir é a leathnú chun ríomhchláir duga eile a chruthú agus gnéithe níos forbartha acu. Mar sin, is é Plank an bhunteicneolaíocht le haghaidh Docky (ó leagan 3.0.0 amach) agus tá sprioc ann na gnéithe lárnacha Docky a sholáthar cé go bhfuil na gnéithe sin á leathnú ag Docky chun rudaí galánta mar dugaíní, péintéirí, dialóga socruithe, srl. a chur leis.</p>
+    <p xml:lang="fr">Par ailleurs, c'est une bibliothèque qui peut être étendue afin de créer d'autres docks comprenant des fonctionnalités plus avancées. Plank est la technologie sous-jacente de Docky (depuis la version 3.0.0) et vise à fournir toutes les fonctionnalités essentielles tandis que Docky la développe pour ajouter des fantaisies telles que les Docklets, les décorateurs, les fenêtres de paramètres, etc.</p>
+    <p xml:lang="fi">Se on kuitenkin samalla kirjasto, jota voi laajentaa samalla luoden muita telakkasovelluksia lisäominaisuuksilla. Plank toimii myös Docky-telakan pohjana versiosta 3.0.0 alkaen. Tavoite on tarjota telakan ydintoiminnot, jolloin Docky voi laajentaa ominaisuuksia omin lisäosin.</p>
+    <p xml:lang="eu">Beraz, zera da, liburutegia zein zabaldu daiteke beste portu programa batzuk sortzeko eginbide aurreratu gehiagorekin. Honela, Plank azpitik dagoen teknologia da Docky-rentzat (3.0.0 bertsiotik aurrera) eta Plank honen asmoa da funtsezko eginbide guztiak eskaintzea. Docky-k, ordea, gauza txundigarriagoak eskaintzen ditu: Dockletak, pintatzaileak, ezarpen menuak, etab.</p>
+    <p xml:lang="et">See on samuti ka kogumik, mida on võimalik kasutada teiste dokkide loomiseks. Seega, Plank on aluseks Docky'le (alates versioonist 3.0.0) ning üritab pakkuda põhifunktsioone ning Docky omakorda täiendab neid, et lisada rohkem võimalusi, nagu dokletid, värvid, eelistuste dialoogid, jne.</p>
+    <p xml:lang="es">Además es una biblioteca que puede ampliarse para crear otros «docks» con mayores prestaciones. Así, Plank es la tecnología subyacente de Docky (a partir de la versión 3.0.0), proveyendo la funcionalidad básica que Docky extiende con «docklets» y otras funciones.</p>
+    <p xml:lang="en-GB">It is, however, a library which can be extended to create other dock programs with more advanced features. Thus, Plank is the underlying technology for Docky (starting in version 3.0.0) and aims to provide all the core features while Docky extends it to add fancier things like Docklets, painters, settings dialogues, etc.</p>
+    <p xml:lang="en-CA">It is, however, a library which can be extended to create other dock programs with more advanced features. Thus, Plank is the underlying technology for Docky (starting in version 3.0.0) and aims to provide all the core features, while Docky extends it to add fancier things like Docklets, painters, settings dialogs, etc.</p>
+    <p xml:lang="el">Είναι, ωστόσο, μια βιβλιοθήκη η οποία μπορεί να επεκταθεί για να δημιουργήσει άλλα προγράμματα υποδοχής με πιο προηγμένα χαρακτηριστικά. Έτσι, το Plank είναι η υποκείμενη τεχνολογία για το Docky (αρχής γενομένης από την έκδοση 3.0.0) και έχει ως στόχο να παρέχει όλα τα βασικά χαρακτηριστικά, ενώ το Docky επεκτείνεται για να προσθέσετε πιο φανταχτερά πράγματα όπως Υποδοχίδια, χρωματιστές, ρυθμίσεις διαλόγων, κλπ.</p>
+    <p xml:lang="de">Es ist jedoch eine Bibliothek, die erweitert werden kann, um andere Dockprogramme mit erweiterten Funktionen zu erstellen. So ist Plank die zugrunde liegende Technik für Docky (ab Version 3.0.0) und zielt darauf ab, die nötigen Kernfunktionen zur Verfügung zu stellen, während Docky diese um schicke Dinge wie Docklets, Painters, Einstellungsdialoge usw. erweitert,</p>
+    <p xml:lang="da">Det er dog et bibliotek som kan udvides for at oprette andre dok-programmer med mere avancerede funktioner. Plank er således den underliggende teknologi for Docky (fra version 3.0.0) og går efter at levere alle kerne-funktionerne, mens Docky udvider Plank med henblik på tilføjelse af smarte ting såsom dokletter, malere, indstillingsdialoger osv.</p>
+    <p xml:lang="ckb">وایە، هەرچۆنێک بێت، کتێبخانەیەک کە دەتوانێت درێژبکرێتەوە بۆ دروستکردنی دۆکی بەرنامەکانی دیکە لەگەڵ زۆر تایبەتمەندی پێشکەوتووی تر. کەواتە، پلانک ته‌كنۆلۆژیایەکە بۆ خەتبەژێر هێنانی دۆکی (دەستپێدەکات لە ڤێرژنی ٣.٠.٠) و ئامانجی دابینکرنی هەموو دەنکە تایبەتمەندەکانە لە کاتێکدا دۆکی درێژیدەکاتەوە بۆ زیادکردنی شتە حەزلێکراوەکان وەک دۆکلێتس، نیگارکێش، ئاخاوتنی ڕێکخستنەکان، هتد.</p>
+    <p xml:lang="ca">No obstant això, es tracta d'una llibreria que es pot extendre per tal de crear altres programes acoblats amb característiques més avançades. Així doncs, el Plank és la tecnología subjacent per al Docky (a partir de la versió 3.0.0), i té com a objectiu proporcionar totes les característiques bàsiques, mentre que el Docky esten aquestes per incorporar coses més elegants com Docklets, pintors, quadres de diàleg d'ajustos, etc.</p>
+    <p xml:lang="bg">Това е основната библиотека, която може да се разширява и да се създават и други докове с по-разширени възможности. Plank е технологията скрита в Docky (от версия 3.0.0 насам) и има за да даде всички основни функции, докато Docky прави всички красоти, като доклети, теми, диалози за настройка и т.н.</p>
+    <p xml:lang="be-Cyrl">Аднак, гэта бібліятэка, якую можна выкарыстаць для стварэння іншых панэляў з больш разнастайнымі функцыямі. Такім чынам, Plank з’яўляецца асноўнай тэхналогіяй Docky (пачынаючы з версіі 3.0.0), мэтаю якой з’яўляецца забеспячэнне асноўных функцый,  а Docky пашырае яе і дадае такія элементы, як доклеты,  афарбоўку, дыялогі налад і іншае.</p>
+  </description>
+  <keywords>
+    <keyword>dock</keyword>
+    <keyword>launch</keyword>
+    <keyword>panel</keyword>
+    <keyword>start</keyword>
+  </keywords>
+  <url type="homepage">https://github.com/Neeraj-Parekh/wayplank</url>
+  <url type="bugtracker">https://github.com/Neeraj-Parekh/wayplank/issues</url>
+  <url type="faq">https://answers.launchpad.net/plank</url>
+  <url type="translate">https://translations.launchpad.net/plank</url>
+  <provides>
+    <library>libwayplank.so.1</library>
+    <binary>plank</binary>
+  </provides>
+  <releases>
+    <release version="0.11.89" timestamp="1566230400"/>
+    <release version="0.11.4" timestamp="1490644800"/>
+    <release version="0.11.3" timestamp="1481047200"/>
+    <release version="0.11.2" timestamp="1465190929"/>
+    <release version="0.11.1" timestamp="1459324800"/>
+    <release version="0.11.0" timestamp="1457816400"/>
+    <release version="0.10.1" timestamp="1444388400"/>
+    <release version="0.10.0" timestamp="1441623600"/>
+    <release version="0.9.1" timestamp="1430564400"/>
+    <release version="0.9.0" timestamp="1428836400"/>
+    <release version="0.8.1" timestamp="1422187200"/>
+    <release version="0.8.0" timestamp="1420200000"/>
+    <release version="0.7.1" timestamp="1411470000"/>
+    <release version="0.7.0" timestamp="1410778800"/>
+    <release version="0.6.1" timestamp="1400583600"/>
+    <release version="0.6.0" timestamp="1397473200"/>
+    <release version="0.5.0" timestamp="1384689600"/>
+    <release version="0.4.0" timestamp="1382094000"/>
+    <release version="0.3.0" timestamp="1372158000"/>
+  </releases>
+  <screenshots>
+    <screenshot type="default">
+      <image>http://people.ubuntu.com/~ricotz/appdata/plank_dock.png</image>
+    </screenshot>
+    <screenshot>
+      <image>http://people.ubuntu.com/~ricotz/appdata/plank_preferences_appearance.png</image>
+    </screenshot>
+    <screenshot>
+      <image>http://people.ubuntu.com/~ricotz/appdata/plank_preferences_behaviour.png</image>
+    </screenshot>
+  </screenshots>
+  <project_license>GPL-3.0</project_license>
+  <developer_name>The Plank Developers</developer_name>
+  <developer_name xml:lang="de">Die Plank Entwickler</developer_name>
+  <update_contact>ricotz_at_ubuntu.com</update_contact>
+</component>

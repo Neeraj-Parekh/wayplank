@@ -1,0 +1,7 @@
+wayplank (1.0.0-1) unstable; urgency=medium
+
+  * Fork Plank as Wayplank: native Wayland app tracking via Shell bridge,
+    rebrand (binary, schema, desktop, icons, library), degraded
+    pinned-only mode without the bridge.
+
+ -- Neeraj Parekh <neerajparekh@outlook.com>  Sun, 04 Oct 2026 21:00:00 +0530
