@@ -108,7 +108,17 @@ install_bridge() {
   mkdir -p "$dest"
   curl -fsSL https://codeload.github.com/Neeraj-Parekh/wayplank-bridge/tar.gz/refs/heads/main \
     | tar -xz -C "$dest" --strip-components=1 >>"$LOG" 2>&1 || die "bridge download failed"
-  node --check "$dest/extension.js" >/dev/null 2>&1 || have node || true
+  # GNOME < 45 uses the legacy extension system (no ES modules): swap entry point.
+  local shell_major=0
+  shell_major=$(gnome-shell --version 2>/dev/null | grep -oE "[0-9]+" | head -1) || true
+  if [ -n "$shell_major" ] && [ "$shell_major" -lt 45 ]; then
+    say "GNOME $shell_major detected: using legacy extension entry point"
+    curl -fsSL https://raw.githubusercontent.com/Neeraj-Parekh/wayplank-bridge/main/extension-legacy.js \
+      -o "$dest/extension.js" >>"$LOG" 2>&1 || die "legacy bridge download failed"
+  else
+    rm -f "$dest/extension-legacy.js" || true
+  fi
+  node --check "$dest/extension.js" >/dev/null 2>&1 || true
   if have gnome-extensions; then
     gnome-extensions enable wayplank-bridge@local >>"$LOG" 2>&1 || true
   fi
