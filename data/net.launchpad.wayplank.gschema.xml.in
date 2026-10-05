@@ -8,14 +8,14 @@
 		<value nick="dodge-active" value="5"/>
 	</enum>
 
-	<enum id="GtkAlignType">
+	<enum id="WayplankGtkAlignType">
 		<value nick="fill" value="0"/>
 		<value nick="start" value="1"/>
 		<value nick="end" value="2"/>
 		<value nick="center" value="3"/>
 	</enum>
 
-	<enum id="GtkPositionType">
+	<enum id="WayplankGtkPositionType">
 		<value nick="left" value="0"/>
 		<value nick="right" value="1"/>
 		<value nick="top" value="2"/>
