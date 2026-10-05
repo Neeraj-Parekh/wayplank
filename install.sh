@@ -57,12 +57,12 @@ PY
 
 install_dock_deb() {
   local url deb
-  url=$(latest_deb_url) || die "no .deb in latest GitHub release (log has details)"
+  url=$(latest_deb_url) || return 1
   say "downloading $(basename "$url")"
   deb=/tmp/$(basename "$url")
-  curl -fsSL -o "$deb" "$url" >>"$LOG" 2>&1 || die "download failed"
+  curl -fsSL -o "$deb" "$url" >>"$LOG" 2>&1 || return 1
   say "installing dock (needs sudo)"
-  $SUDO apt-get install -y "$deb" >>"$LOG" 2>&1 || die "apt install failed — see $LOG"
+  $SUDO apt-get install -y "$deb" >>"$LOG" 2>&1 || return 1
 }
 
 install_dock_source_debian() {
@@ -150,9 +150,13 @@ verify() {
 main() {
   if is_debian_family; then
     if [ "$ID" = "ubuntu" ]; then
-      case "$VERSION_ID" in 24.04|25.*|26.*) install_dock_deb;; *) install_dock_source_debian;; esac
-    else
-      install_dock_deb || install_dock_source_debian
+      case "$VERSION_ID" in
+        24.04|25.*|26.*) install_dock_deb || die "no .deb in latest release yet — see $LOG" ;;
+        *) install_dock_source_debian ;;
+      esac
+    elif ! install_dock_deb; then
+      say ".deb path failed, falling back to source build"
+      install_dock_source_debian
     fi
   elif is_fedora_family; then install_dock_source_fedora
   elif is_arch_family;   then install_dock_source_arch
