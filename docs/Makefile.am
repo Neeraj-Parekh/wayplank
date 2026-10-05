@@ -92,7 +92,7 @@ valadoc_flags_plank = \
 	--package-version $(PACKAGE_VERSION) \
 	$(PLANK_DOCS_VALAFLAGS) \
 	--driver "`$(VALAC) --version`" \
-	--pkg plank-internal \
+	--pkg wayplank-internal \
 	--pkg compat \
 	--pkg config \
 	--vapidir=$(top_builddir)/lib \

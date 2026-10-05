@@ -20,7 +20,7 @@ libdocklet_cpumonitor_la_VALAFLAGS = \
 	$(VAPIDIR)/config.vapi \
 	--vapidir $(top_srcdir)/vapi \
 	--vapidir $(top_builddir)/lib \
-	--pkg plank \
+	--pkg wayplank \
 	$(NULL)
 
 libdocklet_cpumonitor_la_LIBADD = \

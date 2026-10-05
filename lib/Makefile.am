@@ -47,7 +47,7 @@ libwayplank_la_LDFLAGS = \
 	$(NULL)
 
 libwayplank_la_VALAFLAGS = \
-	$(builddir)/plank-internal.vapi \
+	$(builddir)/wayplank-internal.vapi \
 	$(NULL)
 
 libwayplank_la_LIBADD = \
@@ -185,15 +185,15 @@ nodist_libwayplank_internal_la_SOURCES = \
 	$(libwayplank_internal_la_VALASOURCES:.vala=.c) \
 	$(NULL)
 
-plank-internal.h plank-internal.vapi: libwayplank_internal_la_vala.stamp
+wayplank-internal.h wayplank-internal.vapi: libwayplank_internal_la_vala.stamp
 $(libwayplank_internal_la_VALASOURCES:.vala=.c): libwayplank_internal_la_vala.stamp
 
 libwayplank_internal_la_vala.stamp: $(libwayplank_internal_la_VALASOURCES) Makefile
 	$(AM_V_VALA)$(VALAC) \
 		$(AM_VALAFLAGS) \
-		-H plank-internal.h \
-		--library plank-internal \
-		--vapi plank-internal.vapi \
+		-H wayplank-internal.h \
+		--library wayplank-internal \
+		--vapi wayplank-internal.vapi \
 		$(filter %.vala %.c,$^)
 	$(AM_V_at)touch $@
 
@@ -209,8 +209,8 @@ CLEANFILES = \
 	wayplank.pc \
 	wayplank.vapi \
 	wayplank.h \
-	plank-internal.vapi \
-	plank-internal.h \
+	wayplank-internal.vapi \
+	wayplank-internal.h \
 	Version.vala \
 	$(NULL)
 
