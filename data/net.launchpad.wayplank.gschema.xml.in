@@ -34,7 +34,7 @@
 	</schema>
 
 	<schema id="net.launchpad.wayplank.dock.settings" gettext-domain="@GETTEXT_PACKAGE@">
-		<key name="alignment" enum='GtkAlignType'>
+		<key name="alignment" enum='WayplankGtkAlignType'>
 			<default>'center'</default>
 			<summary>The alignment for the dock along the monitor's edge</summary>
 			<description>Possible values are "fill", "start", "end", and "center".</description>
@@ -71,7 +71,7 @@
 			<summary>Icon Size</summary>
 			<description>The size of dock items, in pixels.</description>
 		</key>
-		<key name="items-alignment" enum='GtkAlignType'>
+		<key name="items-alignment" enum='WayplankGtkAlignType'>
 			<default>'center'</default>
 			<summary>The alignment of dock items</summary>
 			<description>Possible values are "fill", "start", "end", and "center".</description>
@@ -97,7 +97,7 @@
 			<summary>Only show pinned applications</summary>
 			<description>If true, only show pinned applications. Useful for running more than one dock.</description>
 		</key>
-		<key name="position" enum='GtkPositionType'>
+		<key name="position" enum='WayplankGtkPositionType'>
 			<default>'bottom'</default>
 			<summary>The position for the dock on the monitor</summary>
 			<description>Possible values are "left", "right", "top", and "bottom".</description>
