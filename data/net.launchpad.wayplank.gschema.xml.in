@@ -1,5 +1,5 @@
 <schemalist>
-	<enum id="PlankHideType">
+	<enum id="WayplankHideType">
 		<value nick="none" value="0"/>
 		<value nick="intelligent" value="1"/>
 		<value nick="auto" value="2"/>
@@ -60,7 +60,7 @@
 			<summary>Dock hide delay</summary>
 			<description>Length of the delay before hiding the dock, in milliseconds.</description>
 		</key>
-		<key name="hide-mode" enum='PlankHideType'>
+		<key name="hide-mode" enum='WayplankHideType'>
 			<default>'intelligent'</default>
 			<summary>Hidemode of the dock</summary>
 			<description>Possible values are "none", "intelligent", "auto", "dodge-maximized", "window-dodge", and "dodge-active".</description>
