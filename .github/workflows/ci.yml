@@ -14,7 +14,8 @@ jobs:
             libbamf3-dev libgee-0.8-dev libgnome-menu-3-dev \
             libxfixes-dev libxi-dev libdbusmenu-glib-dev \
             libdbusmenu-gtk3-dev autoconf automake libtool gettext \
-            autopoint gtk-doc-tools
+            autopoint gtk-doc-tools \
+            libxml2-utils
       - name: Configure
         run: NOCONFIGURE=1 ./autogen.sh && ./configure --prefix=/usr
       - name: Build
@@ -35,7 +36,8 @@ jobs:
             libbamf3-dev libgee-0.8-dev libgnome-menu-3-dev \
             libxfixes-dev libxi-dev libdbusmenu-glib-dev \
             libdbusmenu-gtk3-dev autoconf automake libtool gettext \
-            autopoint gtk-doc-tools
+            autopoint gtk-doc-tools \
+            libxml2-utils
       - name: Build package
         run: dpkg-buildpackage -us -uc -b
       - name: Name artifact per distro

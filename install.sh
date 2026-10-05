@@ -71,7 +71,8 @@ install_dock_source_debian() {
   $SUDO apt-get install -y git valac libgtk-3-dev libwnck-3-dev libbamf3-dev \
     libgee-0.8-dev libgnome-menu-3-dev libxfixes-dev libxi-dev \
     libdbusmenu-glib-dev libdbusmenu-gtk3-dev autoconf automake libtool \
-    gettext autopoint gtk-doc-tools >>"$LOG" 2>&1 || die "build deps failed"
+    gettext autopoint gtk-doc-tools \
+    libxml2-utils >>"$LOG" 2>&1 || die "build deps failed"
   local src=/tmp/wayplank-src
   rm -rf "$src"; git clone --depth 1 https://github.com/Neeraj-Parekh/wayplank "$src" >>"$LOG" 2>&1 || die "clone failed"
   (cd "$src" && NOCONFIGURE=1 ./autogen.sh >>"$LOG" 2>&1 && ./configure --prefix=/usr >>"$LOG" 2>&1 \
@@ -83,7 +84,8 @@ install_dock_source_fedora() {
   $SUDO dnf install -y git vala gtk3-devel libwnck3-devel bamf-devel \
     gee-devel gnome-menus-devel libXfixes-devel libXi-devel \
     libdbusmenu-glib-devel libdbusmenu-gtk3-devel autoconf automake \
-    libtool gettext gtk-doc >>"$LOG" 2>&1 || die "build deps failed (bamf may be missing on this release)"
+    libtool gettext gtk-doc \
+    libxml2-utils >>"$LOG" 2>&1 || die "build deps failed (bamf may be missing on this release)"
   local src=/tmp/wayplank-src
   rm -rf "$src"; git clone --depth 1 https://github.com/Neeraj-Parekh/wayplank "$src" >>"$LOG" 2>&1 || die "clone failed"
   (cd "$src" && NOCONFIGURE=1 ./autogen.sh >>"$LOG" 2>&1 && ./configure --prefix=/usr >>"$LOG" 2>&1 \
@@ -92,7 +94,7 @@ install_dock_source_fedora() {
 
 install_dock_source_arch() {
   say "building from source (needs sudo for build deps)"
-  $SUDO pacman -S --needed --noconfirm git base-devel vala gtk3 libwnck3 bamf gee gnome-menus dbusmenu-gtk3 >>"$LOG" 2>&1 || die "build deps failed"
+  $SUDO pacman -S --needed --noconfirm git base-devel vala gtk3 libwnck3 bamf gee gnome-menus dbusmenu-gtk3 libxml2 >>"$LOG" 2>&1 || die "build deps failed"
   local src=/tmp/wayplank-src
   rm -rf "$src"; git clone --depth 1 https://github.com/Neeraj-Parekh/wayplank "$src" >>"$LOG" 2>&1 || die "clone failed"
   (cd "$src" && NOCONFIGURE=1 ./autogen.sh >>"$LOG" 2>&1 && ./configure --prefix=/usr >>"$LOG" 2>&1 \

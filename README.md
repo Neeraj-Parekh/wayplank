@@ -17,13 +17,19 @@ Wayplank runs with pinned launchers only.
 sudo apt install ./wayplank_1.0.0_amd64.deb
 ```
 
+Easiest (auto-detects your distro, installs the bridge, migrates config):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Neeraj-Parekh/wayplank/main/install.sh | bash
+```
+
 Or build from source:
 
 ```bash
 sudo apt install valac libgtk-3-dev libwnck-3-dev libbamf3-dev \
   libgee-0.8-dev libgnome-menu-3-dev libxfixes-dev libxi-dev \
   libdbusmenu-glib-dev libdbusmenu-gtk3-dev autoconf automake \
-  libtool gettext autopoint gtk-doc-tools
+  libtool gettext autopoint gtk-doc-tools libxml2-utils
 ./autogen.sh && ./configure --prefix=/usr && make -j$(nproc)
 ```
 
