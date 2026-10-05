@@ -21,3 +21,29 @@ jobs:
         run: make -j$(nproc)
       - name: Check
         run: make check || true
+
+  deb:
+    runs-on: ubuntu-24.04
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y debhelper valac libgtk-3-dev libwnck-3-dev \
+            libbamf3-dev libgee-0.8-dev libgnome-menu-3-dev \
+            libxfixes-dev libxi-dev libdbusmenu-glib-dev \
+            libdbusmenu-gtk3-dev autoconf automake libtool gettext \
+            autopoint gtk-doc-tools
+      - name: Build package
+        run: dpkg-buildpackage -us -uc -b
+      - name: Name artifact per distro
+        run: |
+          . /etc/os-release
+          for f in ../*.deb; do mv "$f" "../$(basename "$f" .deb)-${ID}${VERSION_ID}_amd64.deb"; done
+          ls ../*.deb
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ../*.deb
