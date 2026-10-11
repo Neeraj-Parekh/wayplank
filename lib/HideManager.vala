@@ -124,6 +124,14 @@ namespace Plank
 		 * re-triggers show() on every poll -> endless show/hide loop. */
 		bool edge_armed = true;
 		const int REARM_PX = 48;
+		/* Reveal rate limit: at most one reveal per interval, no matter how
+		 * many fresh entries arrive. External actors (e.g. a cursor-crossover
+		 * tool yanking the pointer across the edge and back) can otherwise
+		 * generate entry/exit cycles no re-arming can tell apart from real
+		 * pushes. The entry is still consumed (disarmed) so a parked pointer
+		 * can't bank up reveals. Deliberate summons are slower than this. */
+		int64 last_reveal_us = 0;
+		const int64 REVEAL_MIN_INTERVAL_US = 4000000;
 		/* Edge hold: while the pointer stays in the dock's edge strip the
 		 * dock counts as hovered so intellihide can't snatch it back between
 		 * reveal polls. Refreshed on every poll while in the strip. */
@@ -660,11 +668,17 @@ namespace Plank
 
 			if (at_edge && edge_armed) {
 				/* Fresh entry into the edge: disarm until the pointer leaves
-				 * the re-arm zone, then reveal. */
+				 * the re-arm zone, then reveal -- at most once per interval
+				 * (see REVEAL_MIN_INTERVAL_US). The entry is consumed either
+				 * way so nothing can bank up reveals. */
 				edge_armed = false;
-				debug ("reveal edge-push at x=%d y=%d", x, y);
-				edge_hold_until = GLib.get_monotonic_time () + EDGE_HOLD_US;
-				show ();
+				var now = GLib.get_monotonic_time ();
+				if (now - last_reveal_us >= REVEAL_MIN_INTERVAL_US) {
+					last_reveal_us = now;
+					debug ("reveal edge-push at x=%d y=%d", x, y);
+					edge_hold_until = now + EDGE_HOLD_US;
+					show ();
+				}
 			} else if (!at_edge && !in_edge_strip (x, y)) {
 				/* Pointer fully gone: kill any pending (stale) unhide so a
 				 * brief visit can't pop the dock out after it left, then
