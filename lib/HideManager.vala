@@ -117,6 +117,13 @@ namespace Plank
 		const uint REVEAL_TIMEOUT = 100U;
 		const int REVEAL_EDGE_PX = 5;
 		uint reveal_tick = 0U;
+		/* Edge re-arm: reveal fires only on a fresh ENTRY into the edge
+		 * strip, not on mere presence. After a reveal the edge disarms and
+		 * stays disarmed until the pointer leaves well past the strip
+		 * (REARM_PX). Without this a parked pointer at the screen edge
+		 * re-triggers show() on every poll -> endless show/hide loop. */
+		bool edge_armed = true;
+		const int REARM_PX = 48;
 		/* Edge hold: while the pointer stays in the dock's edge strip the
 		 * dock counts as hovered so intellihide can't snatch it back between
 		 * reveal polls. Refreshed on every poll while in the strip. */
@@ -648,12 +655,36 @@ namespace Plank
 				break;
 			}
 
-			if (at_edge) {
+			if (at_edge && edge_armed) {
+				/* Fresh entry into the edge: disarm until the pointer leaves
+				 * the re-arm zone, then reveal. */
+				edge_armed = false;
 				debug ("reveal edge-push at x=%d y=%d", x, y);
 				edge_hold_until = GLib.get_monotonic_time () + EDGE_HOLD_US;
 				show ();
+			} else if (!at_edge && past_rearm (x, y)) {
+				edge_armed = true;
 			} else if (in_edge_strip (x, y)) {
 				edge_hold_until = GLib.get_monotonic_time () + EDGE_HOLD_US;
+			}
+		}
+
+		/* True once the pointer has left the edge strip plus a margin, so a
+		 * parked pointer can't re-trigger reveals. */
+		bool past_rearm (int x, int y)
+		{
+			unowned Gdk.Screen screen = Gdk.Screen.get_default ();
+			switch (controller.prefs.Position) {
+			case Gtk.PositionType.TOP:
+				return (y > REVEAL_EDGE_PX + REARM_PX);
+			case Gtk.PositionType.BOTTOM:
+				return (y < screen.get_height () - REVEAL_EDGE_PX - REARM_PX);
+			case Gtk.PositionType.LEFT:
+				return (x > REVEAL_EDGE_PX + REARM_PX);
+			case Gtk.PositionType.RIGHT:
+				return (x < screen.get_width () - REVEAL_EDGE_PX - REARM_PX);
+			default:
+				return true;
 			}
 		}
 
