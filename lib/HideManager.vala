@@ -128,7 +128,10 @@ namespace Plank
 		 * dock counts as hovered so intellihide can't snatch it back between
 		 * reveal polls. Refreshed on every poll while in the strip. */
 		int64 edge_hold_until = 0;
-		const int64 EDGE_HOLD_US = 2000000;
+		/* Short grace so travel from the edge into the dock isn't cut off.
+		 * Kept small on purpose: a long hold outlives quick visits (e.g. a
+		 * tab click) and forces phantom reveals via update_hidden(). */
+		const int64 EDGE_HOLD_US = 500000;
 		const int EDGE_STRIP_EXTRA = 12;
 		uint hover_stuck_count = 0U;
 		bool barriers_supported = false;
@@ -662,8 +665,14 @@ namespace Plank
 				debug ("reveal edge-push at x=%d y=%d", x, y);
 				edge_hold_until = GLib.get_monotonic_time () + EDGE_HOLD_US;
 				show ();
-			} else if (!at_edge && past_rearm (x, y)) {
-				edge_armed = true;
+			} else if (!at_edge && !in_edge_strip (x, y)) {
+				/* Pointer fully gone: kill any pending (stale) unhide so a
+				 * brief visit can't pop the dock out after it left, then
+				 * re-arm once it is well clear. hide() on an already-hidden
+				 * dock just cancels the unhide timer. */
+				hide ();
+				if (past_rearm (x, y))
+					edge_armed = true;
 			} else if (in_edge_strip (x, y)) {
 				edge_hold_until = GLib.get_monotonic_time () + EDGE_HOLD_US;
 			}
