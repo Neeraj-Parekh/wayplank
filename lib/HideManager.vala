@@ -434,12 +434,52 @@ namespace Plank
 				return;
 
 			unhide_timer_id = Gdk.threads_add_timeout (controller.prefs.UnhideDelay, () => {
+				/* Completion gate: the pointer must STILL be claiming the
+				 * reveal (at the edge or over the dock). Otherwise this is a
+				 * stale claim from a pointer that already left (e.g. a tab
+				 * click that passed through) -- drop it and stay hidden. */
+				if (Hidden && !reveal_claimed ()) {
+					edge_armed = true;
+					unhide_timer_id = 0U;
+					return false;
+				}
 				if (Hidden)
 					Hidden = false;
 				unhide_timer_id = 0U;
 				finish_show (was_hidden);
 				return false;
 			});
+		}
+
+		/* True while the pointer is claiming a reveal right now: sitting at
+		 * the screen edge or already over the dock window region. */
+		bool reveal_claimed ()
+		{
+			int x = 0, y = 0;
+			if (!query_pointer_xwayland (out x, out y))
+				return true; // fail open: keep previous behavior
+			if (edge_at (x, y))
+				return true;
+			var rect = controller.position_manager.get_static_dock_region ();
+			return (x >= rect.x && x < rect.x + rect.width
+				&& y >= rect.y && y < rect.y + rect.height);
+		}
+
+		bool edge_at (int x, int y)
+		{
+			unowned Gdk.Screen screen = Gdk.Screen.get_default ();
+			switch (controller.prefs.Position) {
+			case Gtk.PositionType.TOP:
+				return (y <= REVEAL_EDGE_PX);
+			case Gtk.PositionType.BOTTOM:
+				return (y >= screen.get_height () - REVEAL_EDGE_PX);
+			case Gtk.PositionType.LEFT:
+				return (x <= REVEAL_EDGE_PX);
+			case Gtk.PositionType.RIGHT:
+				return (x >= screen.get_width () - REVEAL_EDGE_PX);
+			default:
+				return false;
+			}
 		}
 
 		/* On Wayland there is no always-on-top: explicitly raise the dock
@@ -649,22 +689,7 @@ namespace Plank
 				return;
 			}
 
-			bool at_edge = false;
-			unowned Gdk.Screen screen = Gdk.Screen.get_default ();
-			switch (controller.prefs.Position) {
-			case Gtk.PositionType.TOP:
-				at_edge = (y <= REVEAL_EDGE_PX);
-				break;
-			case Gtk.PositionType.BOTTOM:
-				at_edge = (y >= screen.get_height () - REVEAL_EDGE_PX);
-				break;
-			case Gtk.PositionType.LEFT:
-				at_edge = (x <= REVEAL_EDGE_PX);
-				break;
-			case Gtk.PositionType.RIGHT:
-				at_edge = (x >= screen.get_width () - REVEAL_EDGE_PX);
-				break;
-			}
+			bool at_edge = edge_at (x, y);
 
 			if (at_edge && edge_armed) {
 				/* Fresh entry into the edge: disarm until the pointer leaves
