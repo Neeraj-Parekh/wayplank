@@ -153,14 +153,15 @@ namespace Plank
 		bool barriers_supported = false;
 		/* Circuit breaker: if the dock cycles show/hide rapidly (pointer
 		 * tussles, cover-surface flapping, event noise -- anything), lock it
-		 * hidden for a cooldown instead of dancing forever. 6 transitions =
-		 * 3 full show+hide cycles inside 10s trips it. Deliberate summons
+		 * hidden for a cooldown instead of dancing forever. 4 transitions =
+		 * 2 full show+hide cycles inside 20s trips it (deliberately
+		 * sensitive; trips are journal-visible warnings). Deliberate summons
 		 * during the 60s lockout are eaten; calm is worth it. */
 		int64 breaker_until = 0;
 		uint trans_count = 0U;
 		int64 trans_window_start = 0;
-		const uint BREAKER_TRANSITIONS = 6U;
-		const int64 BREAKER_WINDOW_US = 10000000;
+		const uint BREAKER_TRANSITIONS = 4U;
+		const int64 BREAKER_WINDOW_US = 20000000;
 		const int64 BREAKER_COOLDOWN_US = 60000000;
 #endif
 		
@@ -413,7 +414,7 @@ namespace Plank
 				} else if (++trans_count >= BREAKER_TRANSITIONS) {
 					trans_count = 0U;
 					breaker_until = now_us + BREAKER_COOLDOWN_US;
-					debug ("hide cycling detected, locking hidden for 60s");
+					warning ("wayplank: hide cycling detected, locking dock hidden for 60s");
 					if (!Hidden)
 						Hidden = true;
 				}
