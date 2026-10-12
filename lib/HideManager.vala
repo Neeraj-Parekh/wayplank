@@ -151,6 +151,17 @@ namespace Plank
 		const int EDGE_STRIP_EXTRA = 12;
 		uint hover_stuck_count = 0U;
 		bool barriers_supported = false;
+		/* Circuit breaker: if the dock cycles show/hide rapidly (pointer
+		 * tussles, cover-surface flapping, event noise -- anything), lock it
+		 * hidden for a cooldown instead of dancing forever. 6 transitions =
+		 * 3 full show+hide cycles inside 10s trips it. Deliberate summons
+		 * during the 60s lockout are eaten; calm is worth it. */
+		int64 breaker_until = 0;
+		uint trans_count = 0U;
+		int64 trans_window_start = 0;
+		const uint BREAKER_TRANSITIONS = 6U;
+		const int64 BREAKER_WINDOW_US = 10000000;
+		const int64 BREAKER_COOLDOWN_US = 60000000;
 #endif
 		
 		/**
@@ -336,6 +347,15 @@ namespace Plank
 		void update_hidden ()
 		{
 			bool was_hidden = Hidden;
+			var now_us = GLib.get_monotonic_time ();
+
+			/* Breaker tripped: stay hidden, no debate, until cooldown ends. */
+			if (now_us < breaker_until) {
+				if (!Hidden)
+					Hidden = true;
+				pointer_update = true;
+				return;
+			}
 
 			if (Disabled) {
 				if (Hidden)
@@ -385,10 +405,21 @@ namespace Plank
 				break;
 			}
 			pointer_update = true;
-			if (was_hidden != Hidden)
+			if (was_hidden != Hidden) {
 				debug ("hide state changed: hidden %s -> %s", was_hidden.to_string (), Hidden.to_string ());
+				if (now_us - trans_window_start > BREAKER_WINDOW_US) {
+					trans_window_start = now_us;
+					trans_count = 1U;
+				} else if (++trans_count >= BREAKER_TRANSITIONS) {
+					trans_count = 0U;
+					breaker_until = now_us + BREAKER_COOLDOWN_US;
+					debug ("hide cycling detected, locking hidden for 60s");
+					if (!Hidden)
+						Hidden = true;
+				}
 			}
 		}
+	}
 
 		void hide ()
 		{
@@ -420,6 +451,17 @@ namespace Plank
 		void show ()
 		{
 			bool was_hidden = Hidden;
+
+			/* Breaker tripped: never start a reveal, drop pending ones. */
+			if (GLib.get_monotonic_time () < breaker_until) {
+				if (unhide_timer_id > 0U) {
+					GLib.Source.remove (unhide_timer_id);
+					unhide_timer_id = 0U;
+				}
+				if (!Hidden)
+					Hidden = true;
+				return;
+			}
 
 			if (hide_timer_id > 0U) {
 				GLib.Source.remove (hide_timer_id);
