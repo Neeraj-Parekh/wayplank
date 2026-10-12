@@ -132,6 +132,14 @@ namespace Plank
 		 * can't bank up reveals. Deliberate summons are slower than this. */
 		int64 last_reveal_us = 0;
 		const int64 REVEAL_MIN_INTERVAL_US = 4000000;
+		/* Edge dwell: a reveal needs the pointer to sit AT the edge for
+		 * several consecutive polls, not just pass through. Browser tabs
+		 * live inside the edge strip, so fast tab clicks slam through y<=5
+		 * for 1-3 polls on the way -- without dwell counting those slams
+		 * would summon the dock on every tab switch. A deliberate summon
+		 * (resting at the edge) counts 8 polls = ~800ms then reveals. */
+		uint edge_dwell = 0U;
+		const uint EDGE_DWELL_POLLS = 8U;
 		/* Edge hold: while the pointer stays in the dock's edge strip the
 		 * dock counts as hovered so intellihide can't snatch it back between
 		 * reveal polls. Refreshed on every poll while in the strip. */
@@ -691,20 +699,29 @@ namespace Plank
 
 			bool at_edge = edge_at (x, y);
 
-			if (at_edge && edge_armed) {
-				/* Fresh entry into the edge: disarm until the pointer leaves
-				 * the re-arm zone, then reveal -- at most once per interval
-				 * (see REVEAL_MIN_INTERVAL_US). The entry is consumed either
-				 * way so nothing can bank up reveals. */
-				edge_armed = false;
-				var now = GLib.get_monotonic_time ();
-				if (now - last_reveal_us >= REVEAL_MIN_INTERVAL_US) {
-					last_reveal_us = now;
-					debug ("reveal edge-push at x=%d y=%d", x, y);
-					edge_hold_until = now + EDGE_HOLD_US;
-					show ();
+			if (!at_edge)
+				edge_dwell = 0U;
+			if (at_edge) {
+				/* Count continuous presence; pass-throughs (tab slams)
+				 * reset below and never reach the dwell needed to show. */
+				if (edge_dwell < EDGE_DWELL_POLLS)
+					edge_dwell++;
+				if (edge_armed && edge_dwell >= EDGE_DWELL_POLLS) {
+					/* Fresh, rested entry into the edge: disarm until the
+					 * pointer leaves the re-arm zone, then reveal -- at most
+					 * once per interval (see REVEAL_MIN_INTERVAL_US). The
+					 * entry is consumed either way so nothing can bank up
+					 * reveals. */
+					edge_armed = false;
+					var now = GLib.get_monotonic_time ();
+					if (now - last_reveal_us >= REVEAL_MIN_INTERVAL_US) {
+						last_reveal_us = now;
+						debug ("reveal edge-push at x=%d y=%d", x, y);
+						edge_hold_until = now + EDGE_HOLD_US;
+						show ();
+					}
 				}
-			} else if (!at_edge && !in_edge_strip (x, y)) {
+			} else if (!in_edge_strip (x, y)) {
 				/* Pointer fully gone: kill any pending (stale) unhide so a
 				 * brief visit can't pop the dock out after it left, then
 				 * re-arm once it is well clear. hide() on an already-hidden
