@@ -373,9 +373,16 @@ namespace Plank
 			}
 
 			if (Disabled) {
-				if (Hidden)
+				if (Hidden) {
+					debug ("forced shown: menu or drag active");
 					Hidden = false;
-			} else if (edge_held ()) {
+				}
+			} else if (!Hidden && edge_held ()) {
+				/* Edge hold only keeps an ALREADY visible dock up while the
+				 * pointer travels from the edge into it. It must never
+				 * reveal a hidden one: the strip refreshes on a parked
+				 * pointer (tab rows!) and a reveal-happy hold pins the
+				 * dock visible with nobody asking for it. */
 				show ();
 			} else {
 				switch (controller.prefs.HideMode) {
@@ -392,18 +399,19 @@ namespace Plank
 				break;
 			
 			case HideType.AUTO:
-				/* Pointer truth decides, not the cached Hovered bit.
-				 * Crossing events wedge on unmapped/override-redirect
-				 * windows in BOTH directions on Wayland: stuck-true pops
-				 * the dock alone on the next scheduled update, stuck-false
-				 * pins it hidden until a Preferences-flip re-runs this
-				 * machine (the workaround users found by accident).
-				 * Re-deriving from the live pointer each call makes every
-				 * wedge self-correct on the following poll. */
-				if (pointer_claims_dock ())
-					show ();
-				else
+				if (Hidden) {
+					/* Stays hidden. No pointer-position summons from this
+					 * machine: every reveal goes through the reveal poll's
+					 * guards (edge dwell ~0.8s, re-arm, rate limit) or an
+					 * already-visible traversal. A pointer sitting where
+					 * the dock would appear (browser tab rows!) is not a
+					 * summons; that was the pinned-visible bug. */
 					hide ();
+				} else if (pointer_over_visible_dock ()) {
+					show ();
+				} else {
+					hide ();
+				}
 				break;
 			
 			case HideType.DODGE_MAXIMIZED:
@@ -542,16 +550,19 @@ namespace Plank
 				&& y >= rect.y && y < rect.y + rect.height);
 		}
 
-		/* Pointer truth for the hide machine: re-derived from the real
-		 * pointer position on every call. Query failure falls back to the
-		 * cached Hovered suspicion, so no information is lost when
-		 * XWayland is momentarily unreadable. */
-		bool pointer_claims_dock ()
+		/* Keep-alive test for a VISIBLE dock: the pointer is over the dock
+		 * window proper. Anything outside it (including the top band full
+		 * of application tab bars under an overlay dock) lets the dock
+		 * hide again. Falls back to Hovered only if the pointer query
+		 * itself fails; the visible dock has reliable crossing events. */
+		bool pointer_over_visible_dock ()
 		{
 			int x = 0, y = 0;
 			if (!query_pointer_xwayland (out x, out y))
 				return Hovered;
-			return region_claims (x, y);
+			var rect = controller.position_manager.get_static_dock_region ();
+			return (x >= rect.x && x < rect.x + rect.width
+				&& y >= rect.y && y < rect.y + rect.height);
 		}
 
 		/* Claim for reveal completion; fail OPEN on query failure so a
@@ -868,21 +879,33 @@ namespace Plank
 			return GLib.get_monotonic_time () < edge_hold_until;
 		}
 
-		/* True while the pointer is anywhere over the dock's edge strip
-		 * (dock region plus a small margin), so the dock stays put while
-		 * the user moves from the screen edge down into it. */
+		/* True while the pointer is over the dock region plus a small
+		 * margin, on BOTH axes: the corridor the user travels from the
+		 * screen edge into the dock. An earlier version bounded only the
+		 * perpendicular axis, which made the entire top band of the
+		 * screen (tab bars live there) count as the dock corridor and
+		 * pinned the dock visible wherever the pointer idled near the
+		 * top. */
 		bool in_edge_strip (int x, int y)
 		{
 			var rect = controller.position_manager.get_static_dock_region ();
 			switch (controller.prefs.Position) {
 			case Gtk.PositionType.TOP:
-				return y <= rect.y + rect.height + EDGE_STRIP_EXTRA;
+				return (y <= rect.y + rect.height + EDGE_STRIP_EXTRA
+					&& x >= rect.x - EDGE_STRIP_EXTRA
+					&& x < rect.x + rect.width + EDGE_STRIP_EXTRA);
 			case Gtk.PositionType.BOTTOM:
-				return y >= rect.y - EDGE_STRIP_EXTRA;
+				return (y >= rect.y - EDGE_STRIP_EXTRA
+					&& x >= rect.x - EDGE_STRIP_EXTRA
+					&& x < rect.x + rect.width + EDGE_STRIP_EXTRA);
 			case Gtk.PositionType.LEFT:
-				return x <= rect.x + rect.width + EDGE_STRIP_EXTRA;
+				return (x <= rect.x + rect.width + EDGE_STRIP_EXTRA
+					&& y >= rect.y - EDGE_STRIP_EXTRA
+					&& y < rect.y + rect.height + EDGE_STRIP_EXTRA);
 			case Gtk.PositionType.RIGHT:
-				return x >= rect.x - EDGE_STRIP_EXTRA;
+				return (x >= rect.x - EDGE_STRIP_EXTRA
+					&& y >= rect.y - EDGE_STRIP_EXTRA
+					&& y < rect.y + rect.height + EDGE_STRIP_EXTRA);
 			default:
 				return false;
 			}
@@ -1008,27 +1031,27 @@ namespace Plank
 				
 				if (pressure >= PRESSURE_THRESHOLD) {
 					pressure = 0.0;
-					
+
 					if (pressure_timer_id > 0U) {
 						GLib.Source.remove (pressure_timer_id);
 						pressure_timer_id = 0U;
 					}
-					
-					Logger.verbose ("HideManager (pressure-threshold reached > unhide (%f))", PRESSURE_THRESHOLD);
-					
-					freeze_notify ();
-					
-					if (!Hovered) {
-						Hovered = true;
-						update_hidden ();
-					}
-					
-					thaw_notify ();
+
+					Logger.verbose ("HideManager (pressure-threshold reached > arm edge (%f))", PRESSURE_THRESHOLD);
+
+					/* Never forge Hovered or drive the machine directly
+					 * from here: that bypassed every summon guard (edge
+					 * dwell, re-arm, rate limit) and made pressure-reveal
+					 * dance. The barrier holds the pointer at the edge
+					 * anyway, so feed the exact machinery the reveal poll
+					 * uses and let the dwell gate decide; the hold grace
+					 * covers travel. */
+					edge_hold_until = GLib.get_monotonic_time () + EDGE_HOLD_US;
 				}
 				break;
 			case XInput.EventType.BARRIER_LEAVE:
 				if (pressure_timer_id == 0U)
-					pressure_timer_id = Gdk.threads_add_timeout (PRESSURE_TIMEOUT, () => {
+					pressure_timer_id = GLib.Timeout.add (PRESSURE_TIMEOUT, () => {
 						pressure = 0.0;
 						pressure_timer_id = 0U;
 						return false;
