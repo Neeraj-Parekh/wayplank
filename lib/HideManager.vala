@@ -150,6 +150,10 @@ namespace Plank
 		const int64 EDGE_HOLD_US = 500000;
 		const int EDGE_STRIP_EXTRA = 12;
 		uint hover_stuck_count = 0U;
+		/* Watchdog for the hidden state: while the dock is unmapped no
+		 * crossing events arrive, so a stale Hovered=true would otherwise
+		 * sit there until the next scheduled update pops the dock alone. */
+		uint hidden_stuck_hover_count = 0U;
 		bool barriers_supported = false;
 		/* Circuit breaker: if the dock cycles show/hide rapidly (pointer
 		 * tussles, cover-surface flapping, event noise -- anything), lock it
@@ -358,6 +362,16 @@ namespace Plank
 				return;
 			}
 
+			if (breaker_until != 0) {
+				/* First pass after a lockout: reset the summon state exactly
+				 * the way a Preferences-flip used to do it from outside -- no
+				 * stale dwell or disarm carries over into normal service. */
+				breaker_until = 0;
+				edge_armed = true;
+				edge_dwell = 0U;
+				debug ("hide lockout ended, reveal state re-armed");
+			}
+
 			if (Disabled) {
 				if (Hidden)
 					Hidden = false;
@@ -378,7 +392,15 @@ namespace Plank
 				break;
 			
 			case HideType.AUTO:
-				if (Hovered)
+				/* Pointer truth decides, not the cached Hovered bit.
+				 * Crossing events wedge on unmapped/override-redirect
+				 * windows in BOTH directions on Wayland: stuck-true pops
+				 * the dock alone on the next scheduled update, stuck-false
+				 * pins it hidden until a Preferences-flip re-runs this
+				 * machine (the workaround users found by accident).
+				 * Re-deriving from the live pointer each call makes every
+				 * wedge self-correct on the following poll. */
+				if (pointer_claims_dock ())
 					show ();
 				else
 					hide ();
@@ -441,7 +463,7 @@ namespace Plank
 			if (hide_timer_id > 0U)
 				return;
 			
-			hide_timer_id = Gdk.threads_add_timeout (controller.prefs.HideDelay, () => {
+			hide_timer_id = GLib.Timeout.add (controller.prefs.HideDelay, () => {
 				if (!Hidden)
 					Hidden = true;
 				hide_timer_id = 0U;
@@ -484,7 +506,13 @@ namespace Plank
 			if (unhide_timer_id > 0U)
 				return;
 
-			unhide_timer_id = Gdk.threads_add_timeout (controller.prefs.UnhideDelay, () => {
+			/* g_timeout_add is the owned closure API: glib's vapi declares the
+			 * SourceFunc as owned, so valac schedules the block with a real
+			 * reference and frees it via destroy-notify on removal or fire.
+			 * Gdk.threads_add_timeout took an unowned delegate and the
+			 * generated C dropped the block right after scheduling, leaving
+			 * every pending reveal timer as a use-after-free time bomb. */
+			unhide_timer_id = GLib.Timeout.add (controller.prefs.UnhideDelay, () => {
 				/* Completion gate: the pointer must STILL be claiming the
 				 * reveal (at the edge or over the dock). Otherwise this is a
 				 * stale claim from a pointer that already left (e.g. a tab
@@ -502,18 +530,38 @@ namespace Plank
 			});
 		}
 
-		/* True while the pointer is claiming a reveal right now: sitting at
-		 * the screen edge or already over the dock window region. */
-		bool reveal_claimed ()
+		/* True once the pointer sits in the dock region or the edge strip.
+		 * Crossing events are unreliable on Wayland override-redirect
+		 * windows, so Hovered alone can not be trusted for anything. */
+		bool region_claims (int x, int y)
 		{
-			int x = 0, y = 0;
-			if (!query_pointer_xwayland (out x, out y))
-				return true; // fail open: keep previous behavior
 			if (edge_at (x, y))
 				return true;
 			var rect = controller.position_manager.get_static_dock_region ();
 			return (x >= rect.x && x < rect.x + rect.width
 				&& y >= rect.y && y < rect.y + rect.height);
+		}
+
+		/* Pointer truth for the hide machine: re-derived from the real
+		 * pointer position on every call. Query failure falls back to the
+		 * cached Hovered suspicion, so no information is lost when
+		 * XWayland is momentarily unreadable. */
+		bool pointer_claims_dock ()
+		{
+			int x = 0, y = 0;
+			if (!query_pointer_xwayland (out x, out y))
+				return Hovered;
+			return region_claims (x, y);
+		}
+
+		/* Claim for reveal completion; fail OPEN on query failure so a
+		 * transient hiccup never eats a genuine summon mid-transition. */
+		bool reveal_claimed ()
+		{
+			int x = 0, y = 0;
+			if (!query_pointer_xwayland (out x, out y))
+				return true;
+			return region_claims (x, y);
 		}
 
 		bool edge_at (int x, int y)
@@ -718,6 +766,25 @@ namespace Plank
 			int x = 0, y = 0;
 			if (!query_pointer_xwayland (out x, out y))
 				return;
+
+			/* Hidden with a stale Hovered=true: the dock is unmapped, so no
+			 * crossing events will fix it, and the next scheduled update
+			 * would pop the dock with nobody near it. Clear it here with
+			 * the same watchdog discipline the visible branch uses. */
+			if (Hovered) {
+				var rect = controller.position_manager.get_static_dock_region ();
+				bool inside = (x >= rect.x - EDGE_STRIP_EXTRA && x < rect.x + rect.width + EDGE_STRIP_EXTRA
+					&& y >= rect.y - EDGE_STRIP_EXTRA && y < rect.y + rect.height + EDGE_STRIP_EXTRA);
+				if (!inside) {
+					if (++hidden_stuck_hover_count >= 6U) {
+						hidden_stuck_hover_count = 0U;
+						debug ("hidden: stale hover cleared while dock hidden");
+						Hovered = false;
+					}
+				} else {
+					hidden_stuck_hover_count = 0U;
+				}
+			}
 
 			// Hover watchdog: crossing events are unreliable on override-
 			// redirect windows, so Hovered can stick true after the pointer
