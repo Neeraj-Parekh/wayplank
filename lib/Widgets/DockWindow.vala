@@ -83,6 +83,24 @@ namespace Plank
 
 			stick ();
 
+			/* Own the layer instead of inheriting it. XWayland puts new
+			 * windows at the top of the stack; after that only an explicit
+			 * reveal was ever raising the dock (present() on the hidden ->
+			 * visible transition). Between login and the first reveal the
+			 * dock stayed BURIED under every application window opened
+			 * after it -- invisible, unraisable by user action, and not
+			 * even receiving pointer events (the "dock not working at all"
+			 * report). The long crash-storm era masked this because every
+			 * crash restart created a fresh X window naturally on top.
+			 * Assert keep-above on realize and present() once so the dock
+			 * owns its edge from its first second. */
+			set_keep_above (true);
+			realize.connect (() => {
+				set_keep_above (true);
+				present ();
+				debug ("dock window realized, keep-above asserted");
+			});
+
 			// NOTE: previous versions enabled fullscreen + fake RGBA visual
 			// on Wayland to force z-order; that produced a fullscreen black
 			// surface with no transparency fallback. Reverting to a plain
