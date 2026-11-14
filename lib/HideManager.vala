@@ -199,6 +199,13 @@ namespace Plank
 
 			window.enter_notify_event.connect (handle_enter_notify_event);
 			window.leave_notify_event.connect (handle_leave_notify_event);
+			
+			// Log every hide-state transition where it happens. The state is
+			// flipped from several places (the hide timer, the breaker, the
+			// reveal completion), and a log line inside update_hidden() only
+			// ever saw one of them -- which made the dock's behaviour
+			// impossible to follow in the journal.
+			notify["Hidden"].connect (hidden_state_changed);
 
 			// v1 Wayland: window events arrive via the Shell bridge matcher.
 			// poll_tick keeps intellihide re-evaluated every second.
@@ -400,12 +407,6 @@ namespace Plank
 			
 			case HideType.AUTO:
 				if (Hidden) {
-					/* Stays hidden. No pointer-position summons from this
-					 * machine: every reveal goes through the reveal poll's
-					 * guards (edge dwell ~0.8s, re-arm, rate limit) or an
-					 * already-visible traversal. A pointer sitting where
-					 * the dock would appear (browser tab rows!) is not a
-					 * summons; that was the pinned-visible bug. */
 					hide ();
 				} else if (pointer_over_visible_dock ()) {
 					show ();
@@ -538,6 +539,12 @@ namespace Plank
 			});
 		}
 
+		void hidden_state_changed ()
+		{
+			debug ("hide state changed: hidden=%s hovered=%s disabled=%s",
+				Hidden.to_string (), Hovered.to_string (), Disabled.to_string ());
+		}
+		
 		/* True once the pointer sits in the dock region or the edge strip.
 		 * Crossing events are unreliable on Wayland override-redirect
 		 * windows, so Hovered alone can not be trusted for anything. */
@@ -777,6 +784,15 @@ namespace Plank
 			int x = 0, y = 0;
 			if (!query_pointer_xwayland (out x, out y))
 				return;
+			
+			/* Heartbeat: what the reveal poll sees and decides. Without it a
+			 * stalled poll is indistinguishable from a dock that simply
+			 * refuses to come out. */
+			if (reveal_tick % 50U == 0U) {
+				debug ("reveal poll: ptr=(%d,%d) at_edge=%s armed=%s dwell=%u hidden=%s",
+					x, y, edge_at (x, y).to_string (), edge_armed.to_string (),
+					edge_dwell, Hidden.to_string ());
+			}
 
 			/* Hidden with a stale Hovered=true: the dock is unmapped, so no
 			 * crossing events will fix it, and the next scheduled update

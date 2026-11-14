@@ -106,6 +106,27 @@ namespace Plank
 			
 			message_regex = /[(]?.*?([^\/]*?)(\.2)?\.vala(:\d+)[)]?:\s*(.*)/;
 			
+			// This handler replaces glib's default one and drops everything
+			// below WARN, which silently swallows every debug message the
+			// dock produces (its hide decisions included). Let the log level
+			// be raised through the environment so the journal shows what the
+			// dock decided and why.
+			var level_env = Environment.get_variable ("WAYPLANK_LOG_LEVEL");
+			if (level_env != null) {
+				switch (level_env.down ()) {
+				case "verbose": DisplayLevel = LogLevel.VERBOSE; break;
+				case "debug": DisplayLevel = LogLevel.DEBUG; break;
+				case "info": DisplayLevel = LogLevel.INFO; break;
+				case "notify": DisplayLevel = LogLevel.NOTIFY; break;
+				case "warn": DisplayLevel = LogLevel.WARN; break;
+				case "critical": DisplayLevel = LogLevel.CRITICAL; break;
+				case "error": DisplayLevel = LogLevel.ERROR; break;
+				default:
+					warning ("Unknown WAYPLANK_LOG_LEVEL '%s'", level_env);
+					break;
+				}
+			}
+			
 			Log.set_default_handler ((GLib.LogFunc) glib_log_func);
 		}
 		

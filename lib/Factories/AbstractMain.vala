@@ -177,12 +177,14 @@ namespace Plank
 			
 			Logger.initialize (program_name);
 			
+			// The level may already have been raised through the
+			// environment (WAYPLANK_LOG_LEVEL); command line options win.
+			// Do not reset it to WARN here: that silently swallowed every
+			// debug decision the dock makes.
 			if (options.contains ("verbose"))
 				Logger.DisplayLevel = LogLevel.VERBOSE;
 			else if (options.contains ("debug"))
 				Logger.DisplayLevel = LogLevel.DEBUG;
-			else
-				Logger.DisplayLevel = LogLevel.WARN;
 			
 			if (options.lookup ("name", "&s", out dock_name)) {
 				application_id = "%s.%s".printf (app_dbus, dock_name);
