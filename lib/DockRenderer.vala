@@ -282,6 +282,20 @@ namespace Plank
 				zoom_in_progress = 0.0;
 			}
 			
+			/* Once the hide animation has finished, take the window off the
+			 * screen entirely. The dock window spans the whole screen
+			 * edge, so even a fully transparent one would keep swallowing
+			 * every click in that strip. GTK3 has no way to shrink an
+			 * input shape, so unmapping is the way to make a hidden dock
+			 * genuinely click-through. */
+			if (controller.hide_manager.Hidden && hide_progress >= 1.0
+				&& controller.window.get_mapped ()) {
+				GLib.Idle.add (() => {
+					controller.window.unmap ();
+					return false;
+				});
+			}
+			
 			if (fade_opacity < 1.0)
 				opacity = 1.0 - (1.0 - fade_opacity) * hide_progress;
 			else
@@ -345,6 +359,17 @@ namespace Plank
 				critical ("No items available to draw frame");
 				return;
 			}
+			
+			// Always start from a clean, transparent surface. The dock is a
+			// transparent X11 window that spans the whole screen edge, so
+			// every pixel the dock does not paint stays visible. Without
+			// this the pixels where the dock used to be survived its hide
+			// animation as an opaque black strip over the screen edge (the
+			// "black slab"), and that strip swallowed clicks on top of it.
+			cr.save ();
+			cr.set_operator (Cairo.Operator.CLEAR);
+			cr.paint ();
+			cr.restore ();
 			
 			window_scale_factor = controller.window.get_window ().get_scale_factor ();
 			// take the previous frame values into account to decide if we
@@ -1031,6 +1056,14 @@ namespace Plank
 				controller.position_manager.update_dock_position ();
 				controller.window.update_size_and_position ();
 				return;
+			}
+			
+			// Showing: the window was unmapped while the dock was hidden, so
+			// map it back and present it -- that also puts it above the
+			// application windows.
+			if (!controller.hide_manager.Hidden && !controller.window.get_mapped ()) {
+				controller.window.map ();
+				controller.window.present ();
 			}
 			
 			controller.window.update_icon_regions ();
