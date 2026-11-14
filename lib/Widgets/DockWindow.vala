@@ -313,12 +313,16 @@ namespace Plank
 		public override bool configure_event (Gdk.EventConfigure event)
 		{
 			var win_rect = controller.position_manager.get_dock_window_region ();
-			var needs_update = (win_rect.width != event.width || win_rect.height != event.height
-				|| win_rect.x != event.x || win_rect.y != event.y);
+			var needs_resize = (win_rect.width != event.width || win_rect.height != event.height);
 			
-			if (needs_update) {
-				if (++window_position_retry < 3) {
-					critical ("Retry #%i update_size_and_position() to force requested values!", window_position_retry);
+			// On XWayland the compositor owns the window position (it applies
+			// struts, panel avoidance and its own rules), so a position
+			// mismatch is not an error and must not be fought: re-asserting
+			// it only produced a configure-event loop, and it spammed the
+			// journal with CRITICAL lines.
+			if (needs_resize) {
+				if (++window_position_retry < 2) {
+					debug ("configure_event: size mismatch, re-asserting the requested size (retry %i)", window_position_retry);
 					update_size_and_position ();
 				}
 			} else {
