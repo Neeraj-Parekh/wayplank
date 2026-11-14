@@ -20,6 +20,27 @@
 namespace Plank
 {
 	// Collection of constansts which don't have an user-adjustable setting (yet)
+
+	/* Strut layout of the dock window, as reported to the window manager.
+	 * This used to live in the Wnck-based WindowControl, which was removed
+	 * together with the libwnck dependency; the dock still needs the enum
+	 * to publish its struts. */
+	public enum Struts
+	{
+		LEFT,
+		RIGHT,
+		TOP,
+		BOTTOM,
+		LEFT_START,
+		LEFT_END,
+		RIGHT_START,
+		RIGHT_END,
+		TOP_START,
+		TOP_END,
+		BOTTOM_START,
+		BOTTOM_END,
+		N_VALUES
+	}
 	
 	// Duration of animations (in ms)
 	public const uint DOCK_ZOOM_DURATION = 200;

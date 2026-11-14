@@ -161,6 +161,20 @@ namespace Plank
 	{
 		return (type == session_type);
 	}
+
+	/* True only for a genuine X11 session.
+	 *
+	 * The dock runs as an XWayland client inside a Wayland session (it
+	 * needs GDK_BACKEND=x11 to draw), and the session environment may even
+	 * claim XDG_SESSION_TYPE=x11. X11-only integrations must stay off in
+	 * that case: X11 pointer barriers trap the pointer instead of
+	 * reporting it, and libwnck's pager client aborts the process when
+	 * the active icon theme has no "gnome-panel" icon. */
+	public static bool session_is_native_x11 ()
+	{
+		return environment_is_session_type (XdgSessionType.X11)
+			&& Environment.get_variable ("WAYLAND_DISPLAY") == null;
+	}
 	
 	static XdgSessionClass get_xdg_session_class ()
 	{

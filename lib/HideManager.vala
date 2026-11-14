@@ -954,7 +954,7 @@ namespace Plank
 		{
 			// Pointer barriers are X11-only; on Wayland reveal tracking
 			// falls back to the pointer/pressure path.
-			if (!environment_is_session_type (XdgSessionType.X11)) {
+			if (!session_is_native_x11 ()) {
 				barriers_supported = false;
 				return;
 			}

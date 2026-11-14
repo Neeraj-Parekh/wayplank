@@ -134,7 +134,6 @@ PLANK_CORE_PKGS="gobject-2.0 >= $GLIB_MIN_VERSION \
                  cairo >= $CAIRO_MIN_VERSION \
                  gee-0.8 \
                  libbamf3 >= $BAMF_MIN_VERSION \
-                 libwnck-3.0 \
                  x11"
 PLANK_CORE_OPTIONAL_PKGS=""
 
@@ -146,7 +145,6 @@ PLANK_CORE_VALA_PKGS="--pkg gio-unix-2.0 \
                       --pkg cairo \
                       --pkg gee-0.8 \
                       --pkg libbamf3 \
-                      --pkg libwnck-3.0 \
                       --pkg posix \
                       --pkg x11"
 

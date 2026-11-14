@@ -44,8 +44,16 @@ namespace Docky
 		protected override AnimationType on_clicked (PopupButton button, Gdk.ModifierType mod, uint32 event_time)
 		{
 			if (button == PopupButton.LEFT) {
-				unowned Wnck.Screen screen = Wnck.Screen.get_default ();
-				screen.toggle_showing_desktop (!screen.get_showing_desktop ());
+				// The Wnck-based "toggle showing desktop" went away with the
+				// libwnck dependency: its default-icon lookup aborts the
+				// whole process whenever the active icon theme has no
+				// "gnome-panel" icon. GNOME's own show-desktop minimises
+				// every window, so do exactly that through the Shell bridge.
+				var matcher = ShellMatcher.get_default ();
+				foreach (var row in matcher.bridge.apps) {
+					foreach (var win in matcher.bridge.get_windows_for (row.id, row.wins))
+						matcher.bridge.minimize_window (win.id);
+				}
 				return AnimationType.BOUNCE;
 			}
 			

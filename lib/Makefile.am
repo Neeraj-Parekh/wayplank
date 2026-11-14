@@ -2,7 +2,6 @@ include $(top_srcdir)/Makefile.common
 
 AM_CFLAGS = \
 	$(COVERAGE_CFLAGS) \
-	-DWNCK_I_KNOW_THIS_IS_UNSTABLE \
 	-include config.h \
 	$(PLANK_CORE_CFLAGS) \
 	$(NULL)
@@ -171,7 +170,6 @@ libwayplank_internal_la_VALASOURCES = \
 	InternalConsts.vala \
 	InternalQuarks.vala \
 	Services/Matcher.vala \
-	Services/WindowControl.vala \
 	Services/Utils.vala \
 	Widgets/DockletViewModel.vala \
 	$(NULL)

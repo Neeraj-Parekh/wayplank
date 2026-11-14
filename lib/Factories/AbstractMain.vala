@@ -235,7 +235,6 @@ namespace Plank
 			message ("GTK+ version: %u.%u.%u (%i.%i.%i)",
 				Gtk.get_major_version (), Gtk.get_minor_version () , Gtk.get_micro_version (),
 				Gtk.MAJOR_VERSION, Gtk.MINOR_VERSION, Gtk.MICRO_VERSION);
-			message ("Wnck version: %d.%d.%d", Wnck.Version.MAJOR_VERSION, Wnck.Version.MINOR_VERSION, Wnck.Version.MICRO_VERSION);
 			message ("Cairo version: %s", Cairo.version_string ());
 			message ("Pango version: %s", Pango.version_string ());
 			message ("+ Cairo/Gtk+ HiDPI support enabled");
@@ -252,8 +251,11 @@ namespace Plank
 			environment_initialize ();
 			
 			// Track applications through the PlankBridge Shell extension in
-			// every session. Wnck/Bamf are kept alive on X11 only (icon
-			// geometry hints), never used as the tracking source.
+			// every session. The old Wnck/Bamf window tracker was removed:
+			// libwnck's pager client aborts the whole process (g_assert in
+			// default_icon_at_size) whenever the active icon theme has no
+			// "gnome-panel" icon, and the Shell bridge already provides the
+			// window data the dock needs.
 			var probe = new ShellBridge ();
 			if (!probe.update ()) {
 				warning ("PlankBridge Shell extension not reachable (org.wayplank.Bridge) - "
@@ -262,8 +264,6 @@ namespace Plank
 				message ("Tracking applications through the Shell bridge (org.wayplank.Bridge).");
 			}
 			ShellMatcher.get_default ().start_polling ();
-			if (environment_is_session_type (XdgSessionType.X11))
-				WindowControl.initialize ();
 
 			Paths.initialize (exec_name, build_pkg_data_dir);
 			DockletManager.get_default ().load_docklets ();
