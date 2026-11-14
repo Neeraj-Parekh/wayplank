@@ -108,8 +108,39 @@ namespace Plank
 			return null;
 		}
 		
+		/* Desktop-file lookups are hit over and over for the same
+		 * application (every launcher update triggers one), and an
+		 * application without a desktop file re-scanned every applications
+		 * directory and logged a warning each time -- the 'nyx.desktop'
+		 * spam. Cache both outcomes; a negative result is re-checked
+		 * occasionally so an application installed later is still picked
+		 * up. */
+		class UnmatchedApplication {
+			public string uri;
+			public int64 checked_at;
+		}
+		
+		static Gee.HashMap<string, File> matched_desktop_files = new Gee.HashMap<string, File> ();
+		static Gee.ArrayList<UnmatchedApplication> unmatched_desktop_files = new Gee.ArrayList<UnmatchedApplication> ();
+		const int64 UNMATCHED_RECHECK_US = 600000000; /* 10 minutes */
+		
 		static File? desktop_file_for_application_uri (string app_uri)
 		{
+			if (matched_desktop_files.has_key (app_uri))
+				return matched_desktop_files.get (app_uri);
+			
+			for (var i = 0; i < unmatched_desktop_files.size; i++) {
+				var entry = unmatched_desktop_files.get (i);
+				if (entry.uri != app_uri)
+					continue;
+				if (GLib.get_monotonic_time () - entry.checked_at < UNMATCHED_RECHECK_US)
+					return null;
+				unmatched_desktop_files.remove_at (i);
+				break;
+			}
+			
+			File? found = null;
+			
 			foreach (var folder in Paths.DataDirFolders) {
 				var applications_folder = folder.get_child ("applications");
 				if (!applications_folder.query_exists ())
@@ -119,12 +150,21 @@ namespace Plank
 				if (!desktop_file.query_exists ())
 					continue;
 				
-				return desktop_file;
+				found = desktop_file;
+				break;
 			}
 			
-			debug ("Matching application for '%s' not found or not installed!", app_uri);
+			if (found == null) {
+				var entry = new UnmatchedApplication ();
+				entry.uri = app_uri;
+				entry.checked_at = GLib.get_monotonic_time ();
+				unmatched_desktop_files.add (entry);
+				warning ("No desktop file for '%s' - ignoring this application", app_uri);
+			} else {
+				matched_desktop_files.set (app_uri, found);
+			}
 			
-			return null;
+			return found;
 		}
 
 		/**
@@ -403,7 +443,7 @@ namespace Plank
 				}
 				
 				if (current_item == null)
-					warning ("Matching application for '%s' not found or not installed!", app_uri);
+					debug ("No dock item for '%s'", app_uri);
 			}
 		}
 	}
