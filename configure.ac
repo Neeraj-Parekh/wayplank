@@ -359,6 +359,7 @@ docklets/Clippy/Makefile
 docklets/Clock/Makefile
 docklets/CPUMonitor/Makefile
 docklets/Desktop/Makefile
+docklets/Nyx/Makefile
 docklets/Trash/Makefile
 docs/Makefile
 po/Makefile.in

@@ -51,6 +51,23 @@ Hide behaviors: none / intelligent / auto / dodge-maximized. On Wayland,
 intelligent hide uses maximized/fullscreen state from the bridge, and a
 pointer poll reveals the dock at screen edges (pointer barriers are X11-only).
 
+## Nyx docklet
+
+The **Nyx** docklet puts [Nyx Continuity](https://github.com/Neeraj-Parekh/nyx-continuity)
+in the dock: your phone with its battery and connection in the tooltip, a
+dot while it is connected and a glow while the cursor is on the phone (the
+crossover), files dropped on it sent to the phone, a click for the Nyx Hub,
+and Nyx's actions in its menu (App Space, Recent Apps, Tab Mode, mirroring,
+second display, clipboard, phone music, camera, dock settings).
+
+It reads `$XDG_RUNTIME_DIR/nyx-status.ini`, which Nyx rewrites when any of
+that changes, and runs actions with the command that file names - no polling
+and nothing to put on PATH. Add it from Preferences > Docklets, or set Nyx's
+*Show the dock in* to **Wayplank** (Hub > Settings > Dock): Nyx then adds the
+docklet itself and hides its own dock window while Wayplank runs (it keeps
+running the crossover, transfers and App Space, and shows its window again
+if Wayplank goes away).
+
 ## Origin & license
 
 Fork of [Plank](https://github.com/ricotz/plank) (Rico Tzschichholz and

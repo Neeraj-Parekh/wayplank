@@ -5,5 +5,6 @@ SUBDIRS = \
 	Clock \
 	CPUMonitor \
 	Desktop \
+	Nyx \
 	Trash \
 	$(NULL)
