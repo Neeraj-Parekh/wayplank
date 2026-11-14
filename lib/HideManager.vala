@@ -407,7 +407,19 @@ namespace Plank
 			
 			case HideType.AUTO:
 				if (Hidden) {
-					hide ();
+					/* Stays hidden. No pointer-position summons from this
+					 * machine: every reveal goes through the reveal poll's
+					 * guards (edge dwell ~0.8s, re-arm, rate limit) or an
+					 * already-visible traversal. A pointer sitting where
+					 * the dock would appear (browser tab rows!) is not a
+					 * summons; that was the pinned-visible bug.
+					 *
+					 * A pending unhide timer means the dock is already on
+					 * its way out -- do not cancel it. hide() removes the
+					 * timer, so calling it here swallowed every summon
+					 * that the periodic update happened to race. */
+					if (unhide_timer_id == 0U)
+						hide ();
 				} else if (pointer_over_visible_dock ()) {
 					show ();
 				} else {
