@@ -19,6 +19,54 @@ Probe methods used:
 
 ---
 
+## Status (updated as the fixes landed)
+
+| id | defect | severity | status | commit |
+|----|--------|----------|--------|--------|
+| D1 | libwnck `g_assert` SIGABRT loop | CRITICAL | **fixed** — libwnck removed from the build entirely | `1e666c1` |
+| D2 | hidden dock paints an opaque black slab and eats clicks | CRITICAL | **fixed** — transparent surface, window unmapped while hidden | `4e3af9c` |
+| D3 | `_NET_WM_STATE_ABOVE` / `_STICKY` stripped by mutter | MEDIUM | **fixed** — stacking re-asserted with `present()` | `0cfbf7f` |
+| D4 | X11 pointer barriers inside a Wayland session | MEDIUM | **fixed** — barriers now require a native X11 session | `1e666c1` |
+| D5 | `configure_event` retry fight with the compositor | MEDIUM | **fixed** — only size mismatches re-asserted, at debug level | `598b86b` |
+| D6 | `nyx.desktop` rescan + warning loop | MEDIUM | **fixed** — desktop-file lookups are cached | `46f5b6f` |
+| D7 | Unity launcher "behaving badly" | LOW | no change needed — the throttle is upstream behaviour; the churn behind it was D6 | — |
+| D8 | GSettings enum id collision with the plank schema | HIGH | **fixed** — enums renamed | `14b2753` |
+| D9 | stale libtool path in `src/wayplank` | LOW | **fixed** — path updated | `93dc74a` |
+| D10 | hide state machine invisible in the journal | MEDIUM | **fixed** — `WAYPLANK_LOG_LEVEL`, transition log, poll heartbeat | `b3fe8de` |
+| D11 | deliberate summons swallowed by the periodic update | CRITICAL | **fixed** — a pending reveal is no longer cancelled | `1a4b456` |
+
+### D11 (found while fixing D2) — the summon was cancelled by the dock's own update
+
+The reveal fired and the dock still stayed hidden:
+
+```
+reveal edge-push at x=1107 y=1077        <- the summon happened
+reveal poll: at_edge=true armed=false dwell=8 hidden=true
+```
+
+`show()` schedules a reveal timer (`UnhideDelay`). The periodic update
+(`bridge poll tick -> update_window_intersect -> update_hidden`) ran every
+second and, in autohide mode with the dock still hidden, called `hide()` —
+and `hide()` removes the pending reveal timer. So the summon was eaten
+whenever the periodic update won the race.
+
+## Rejected approaches (do not retry)
+
+- **Parking the hidden window off-screen.** Moving the window outside the
+  monitor makes mutter *unmap* it, and it does not map it back when the
+  window is moved back — the dock then reported "shown" while nothing was
+  on screen. Reverted; the window stays in place, transparent and unmapped.
+- **`Gdk.Window.input_shape_region()`** (replace the input region instead of
+  growing it) does not exist in GTK3 — only the growing
+  `input_shape_combine_region()` is available. That is why click-through is
+  solved by unmapping the window rather than by shaping it to nothing.
+- **`_NET_WM_STATE_ABOVE` / `_NET_WM_STATE_STICKY`.** mutter strips both from
+  XWayland clients (verified with `xprop`), so they cannot express
+  keep-above on this platform. The dock window *type* (`_NET_WM_WINDOW_TYPE_DOCK`)
+  plus a periodic `present()` does.
+
+---
+
 ## D1 — SIGABRT crash loop: libwnck `g_assert` kills the whole dock
 
 **Severity: CRITICAL (dock fully dead; took the dock down 46× in ~2.5 min)**
