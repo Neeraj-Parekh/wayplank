@@ -830,6 +830,16 @@ namespace Plank
 			// has left the dock (dock then hangs open). If the real pointer
 			// stays outside the dock region, force-unhover.
 			if (!Hidden) {
+				/* Keep the dock above the application windows. On Wayland an
+				 * X11 dock gets no always-on-top state: mutter strips
+				 * _NET_WM_STATE_ABOVE (and _STICKY) from X clients, so the
+				 * stacking has to be re-asserted instead of requested
+				 * once. Without this, a window opened over the dock
+				 * covered it for good -- the dock was alive but invisible.
+				 * present() raises a dock window without taking focus. */
+				if (reveal_tick % 50U == 0U)
+					controller.window.present ();
+				
 				var rect = controller.position_manager.get_static_dock_region ();
 				bool inside = (x >= rect.x - EDGE_STRIP_EXTRA && x < rect.x + rect.width + EDGE_STRIP_EXTRA
 					&& y >= rect.y - EDGE_STRIP_EXTRA && y < rect.y + rect.height + EDGE_STRIP_EXTRA);
